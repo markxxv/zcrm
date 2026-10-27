@@ -11,6 +11,24 @@ use Illuminate\Validation\ValidationException;
 
 class AvatarController extends Controller
 {
+
+    /**
+     * Stream the stored WebP through Laravel instead of relying on a
+     * public/storage symlink, a separate storage virtual host or APP_URL.
+     */
+    public function show(\App\Models\User $user): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $path = $user->avatar_path;
+
+        abort_unless($path && Storage::disk('public')->exists($path), 404);
+
+        return Storage::disk('public')->response($path, null, [
+            'Content-Type' => 'image/webp',
+            'Cache-Control' => 'private, max-age=86400',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $request->validate([

@@ -33,7 +33,11 @@ class AvatarTest extends TestCase
         $this->assertSame(320, $dimensions[0]);
         $this->assertSame(320, $dimensions[1]);
         $this->assertSame(IMAGETYPE_WEBP, $dimensions[2]);
-        $this->assertSame(Storage::disk('public')->url($user->avatar_path), $user->avatar);
+        $this->assertSame('/avatars/'.$user->id.'?v='.substr(sha1($user->avatar_path), 0, 12), $user->avatar);
+        $this->get($user->avatar)
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/webp')
+            ->assertHeader('Cache-Control', 'private, max-age=86400');
         $this->assertSame($user->avatar, $user->toArray()['avatar']);
         $this->assertArrayNotHasKey('avatar_path', $user->toArray());
     }
@@ -85,7 +89,36 @@ class AvatarTest extends TestCase
 
     public function test_guests_cannot_upload_or_remove_user_avatars(): void
     {
+        $user = User::factory()->create();
+        $this->get(route('avatars.show', $user))->assertRedirect(route('login'));
         $this->post(route('profile.avatar.store'))->assertRedirect(route('login'));
         $this->delete(route('profile.avatar.destroy'))->assertRedirect(route('login'));
     }
+    public function test_missing_avatar_returns_not_found_even_when_user_exists(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('avatars.show', $user))
+            ->assertNotFound();
+    }
+
+    public function test_replacement_changes_avatar_url_for_cache_invalidation(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+        $this->actingAs($user)->post(route('profile.avatar.store'), [
+            'avatar' => UploadedFile::fake()->image('first.jpg', 400, 400),
+        ])->assertSessionHasNoErrors();
+
+        $firstUrl = $user->fresh()->avatar;
+        $this->actingAs($user)->post(route('profile.avatar.store'), [
+            'avatar' => UploadedFile::fake()->image('second.png', 400, 400),
+        ])->assertSessionHasNoErrors();
+
+        $secondUrl = $user->fresh()->avatar;
+        $this->assertNotEquals($firstUrl, $secondUrl);
+        $this->get($secondUrl)->assertOk()->assertHeader('Content-Type', 'image/webp');
+    }
+
 }

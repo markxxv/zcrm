@@ -39,7 +39,9 @@ class User extends Authenticatable
 
     public function getAvatarAttribute(): ?string
     {
-        return $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null;
+        return $this->avatar_path
+            ? '/avatars/'.$this->getKey().'?v='.substr(sha1($this->avatar_path), 0, 12)
+            : null;
     }
 
     public function projects(): BelongsToMany
