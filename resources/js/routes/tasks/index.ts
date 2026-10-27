@@ -1,7 +1,10 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import attachments from './attachments'
+import files from './files'
+import links from './links'
 /**
 * @see \App\Http\Controllers\TaskController::index
-* @see app/Http/Controllers/TaskController.php:14
+* @see app/Http/Controllers/TaskController.php:25
 * @route '/tasks'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +19,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\TaskController::index
-* @see app/Http/Controllers/TaskController.php:14
+* @see app/Http/Controllers/TaskController.php:25
 * @route '/tasks'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +28,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\TaskController::index
-* @see app/Http/Controllers/TaskController.php:14
+* @see app/Http/Controllers/TaskController.php:25
 * @route '/tasks'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +38,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\TaskController::index
-* @see app/Http/Controllers/TaskController.php:14
+* @see app/Http/Controllers/TaskController.php:25
 * @route '/tasks'
 */
 index.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -45,7 +48,7 @@ index.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\TaskController::index
-* @see app/Http/Controllers/TaskController.php:14
+* @see app/Http/Controllers/TaskController.php:25
 * @route '/tasks'
 */
 index.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -55,7 +58,7 @@ index.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
 
 /**
 * @see \App\Http\Controllers\TaskController::index
-* @see app/Http/Controllers/TaskController.php:14
+* @see app/Http/Controllers/TaskController.php:25
 * @route '/tasks'
 */
 index.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -65,7 +68,7 @@ index.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
 
 /**
 * @see \App\Http\Controllers\TaskController::index
-* @see app/Http/Controllers/TaskController.php:14
+* @see app/Http/Controllers/TaskController.php:25
 * @route '/tasks'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -75,7 +78,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\TaskController::index
-* @see app/Http/Controllers/TaskController.php:14
+* @see app/Http/Controllers/TaskController.php:25
 * @route '/tasks'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -85,7 +88,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\TaskController::index
-* @see app/Http/Controllers/TaskController.php:14
+* @see app/Http/Controllers/TaskController.php:25
 * @route '/tasks'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -95,7 +98,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\TaskController::index
-* @see app/Http/Controllers/TaskController.php:14
+* @see app/Http/Controllers/TaskController.php:25
 * @route '/tasks'
 */
 indexForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -105,7 +108,7 @@ indexForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => (
 
 /**
 * @see \App\Http\Controllers\TaskController::index
-* @see app/Http/Controllers/TaskController.php:14
+* @see app/Http/Controllers/TaskController.php:25
 * @route '/tasks'
 */
 indexForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -120,7 +123,7 @@ indexForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\TaskController::index
-* @see app/Http/Controllers/TaskController.php:14
+* @see app/Http/Controllers/TaskController.php:25
 * @route '/tasks'
 */
 indexForm.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -135,7 +138,7 @@ indexForm.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\TaskController::index
-* @see app/Http/Controllers/TaskController.php:14
+* @see app/Http/Controllers/TaskController.php:25
 * @route '/tasks'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -152,6 +155,9 @@ index.form = indexForm
 
 const tasks = {
     index: Object.assign(index, index),
+    attachments: Object.assign(attachments, attachments),
+    files: Object.assign(files, files),
+    links: Object.assign(links, links),
 }
 
 export default tasks
