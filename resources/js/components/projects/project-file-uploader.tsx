@@ -229,7 +229,7 @@ export const ProjectFileUploader = forwardRef<ProjectFileUploaderHandle, Props>(
             if (dragDepth.current === 0) setDragging(false);
         };
 
-        return <div className={compact ? 'mt-3' : 'mb-6'}>
+        return <div className={compact ? 'mt-2' : 'mb-6'}>
             <input
                 ref={inputRef}
                 type="file"
@@ -249,7 +249,7 @@ export const ProjectFileUploader = forwardRef<ProjectFileUploaderHandle, Props>(
                 onDragLeave={dragLeave}
                 onDrop={handleDrop}
                 className={
-                    'rounded-xl border border-dashed transition-colors ' +
+                    (compact ? 'rounded-lg ' : 'rounded-xl ') + 'border border-dashed transition-colors ' +
                     (dragging
                         ? 'border-blue-400 bg-blue-50/60 dark:bg-blue-950/25'
                         : 'border-border/70 bg-muted/25 hover:bg-muted/40')
@@ -259,19 +259,19 @@ export const ProjectFileUploader = forwardRef<ProjectFileUploaderHandle, Props>(
                     type="button"
                     disabled={busy}
                     className={'flex w-full items-center gap-3 text-left disabled:cursor-wait ' +
-                        (compact ? 'p-3.5' : 'p-5')}
+                        (compact ? 'gap-2.5 px-3 py-2' : 'p-5')}
                     onClick={browse}
                 >
-                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-background">
+                    <span className={'grid shrink-0 place-items-center bg-background ' + (compact ? 'size-7 rounded-md' : 'size-9 rounded-lg')}>
                         {busy ? <LoaderCircle className="size-4 animate-spin text-muted-foreground" /> : <CloudUpload className="size-4 text-muted-foreground" />}
                     </span>
                     <span className="min-w-0 flex-1">
-                        <span className="block text-xs font-semibold">{dragging ? 'Drop files to upload' : busy ? 'Uploading files…' : 'Drop files here or choose files'}</span>
-                        <span className="mt-1 block text-[10px] text-muted-foreground">
-                            {compact ? 'Up to 10 files · 20 MB each' : 'Private storage · up to 10 files per batch · 20 MB per file'}
+                        <span className={'block font-semibold ' + (compact ? 'text-[11px]' : 'text-xs')}>{dragging ? 'Drop files to upload' : busy ? 'Uploading files…' : compact ? 'Drop files or choose files' : 'Drop files here or choose files'}</span>
+                        <span className={(compact ? 'mt-0.5' : 'mt-1') + ' block text-[10px] text-muted-foreground'}>
+                            {compact ? '10 files max · 20 MB each' : 'Private storage · up to 10 files per batch · 20 MB per file'}
                         </span>
                     </span>
-                    {!busy && <Upload className="size-4 shrink-0 text-muted-foreground" />}
+                    {!busy && <Upload className={compact ? 'size-3.5 shrink-0 text-muted-foreground' : 'size-4 shrink-0 text-muted-foreground'} />}
                 </button>
             </div>
 

@@ -181,7 +181,7 @@ export default function ProjectShow(props: ProjectShowProps) {
                     </div> : <p className="py-16 text-center text-xs text-muted-foreground">No tasks in this view.</p>}
                 </section>
 
-                <aside className="min-w-0 space-y-11">
+                <aside className="min-w-0 space-y-8">
                     <section>
                         <SectionHeader title="Pinned links" action={<button className={mutedButton} onClick={() => changeTab('links')}>View all <ArrowUpRight className="size-4" /></button>} />
                         <div className="space-y-1">{pinnedLinks.length ? pinnedLinks.map((link) =>
@@ -199,8 +199,8 @@ export default function ProjectShow(props: ProjectShowProps) {
                         <ProjectQuickLink projectId={project.id} />
                     </section>
                     <section>
-                        <SectionHeader title="Recent files" action={<button className={mutedButton} onClick={() => changeTab('files')}>All files <ArrowUpRight className="size-4" /></button>} />
-                        <div className="space-y-1">
+                        <SectionHeader compact title="Recent files" action={<button className={mutedButton} onClick={() => changeTab('files')}>All files <ArrowUpRight className="size-4" /></button>} />
+                        <div className="space-y-0">
                             {recentFiles.length
                                 ? recentFiles.map((file) =>
                                     <ProjectFileRow

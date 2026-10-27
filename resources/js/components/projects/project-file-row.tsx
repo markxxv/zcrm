@@ -12,16 +12,20 @@ type Props = {
 };
 
 export function ProjectFileRow({ projectId, file, canEdit, onEdit, compact = false }: Props) {
+    const controlClass = compact
+        ? 'grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground sm:size-7'
+        : mutedButton;
+
     return <div className={
-        'group flex min-w-0 items-center gap-3 ' +
-        (compact ? 'rounded-lg py-2 hover:bg-muted/30' : 'py-3.5')
+        'group flex min-w-0 items-center ' +
+        (compact ? 'gap-2 rounded-md py-1.5 hover:bg-muted/30' : 'gap-3 py-3.5')
     }>
-        <AttachmentIcon file={file} />
+        <AttachmentIcon file={file} compact={compact} />
         <a href={fileDownloadUrl(projectId, file)}
             className="min-w-0 flex-1"
             title={'Download ' + file.name}>
             <span className="block truncate text-xs font-medium group-hover:text-foreground">{file.name}</span>
-            <span className="mt-1 block truncate text-[10px] text-muted-foreground">
+            <span className={(compact ? 'mt-0.5' : 'mt-1') + ' block truncate text-[10px] text-muted-foreground'}>
                 {compact
                     ? (file.task_title ? 'Task: ' + file.task_title + ' · ' : '') + bytes(file.size) + ' · ' + (file.uploader?.name || 'Unknown')
                     : (file.task_title ? 'Task: ' + file.task_title : (file.tags?.length ? file.tags.join(', ') : 'Project file')) + ' · ' + (file.extension || 'File')}
@@ -31,15 +35,17 @@ export function ProjectFileRow({ projectId, file, canEdit, onEdit, compact = fal
             {file.uploader && <UserAvatar user={file.uploader} className="size-6" />}
             {bytes(file.size)} · {displayDate(file.created_at)}
         </span>}
-        {compact && file.uploader && <UserAvatar user={file.uploader} className="size-6" />}
-        <a href={'/projects/' + projectId + '/files/' + file.id + '/download'}
-            className={mutedButton} title="Download" aria-label={'Download ' + file.name}>
-            <Download className="size-4" />
-        </a>
-        {canEdit && <button type="button" className={mutedButton}
-            onClick={() => onEdit(file)} title="Rename, tag or delete"
-            aria-label={'Manage ' + file.name}>
-            <Pencil className="size-4" />
-        </button>}
+        <div className={'flex shrink-0 items-center ' + (compact ? 'gap-0.5' : 'gap-1')}>
+            {compact && file.uploader && <UserAvatar user={file.uploader} className="mr-1 size-5" />}
+            <a href={fileDownloadUrl(projectId, file)}
+                className={controlClass} title="Download" aria-label={'Download ' + file.name}>
+                <Download className={compact ? 'size-3.5' : 'size-4'} />
+            </a>
+            {canEdit && <button type="button" className={controlClass}
+                onClick={() => onEdit(file)} title="Rename, tag or delete"
+                aria-label={'Manage ' + file.name}>
+                <Pencil className={compact ? 'size-3.5' : 'size-4'} />
+            </button>}
+        </div>
     </div>;
 }

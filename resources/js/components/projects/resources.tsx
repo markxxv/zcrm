@@ -24,7 +24,7 @@ export function ServiceIcon({ kind }: { kind: ProjectLink['kind'] }) {
     return <span className={'grid size-10 shrink-0 place-items-center rounded-lg ' + styles[kind]}><Icon className="size-5" strokeWidth={1.7} /></span>;
 }
 
-export function AttachmentIcon({ file }: { file: ProjectFile }) {
+export function AttachmentIcon({ file, compact = false }: { file: ProjectFile; compact?: boolean }) {
     const e = (file.extension || '').toLowerCase();
     let Icon = File;
     let color = 'bg-muted text-muted-foreground';
@@ -32,7 +32,9 @@ export function AttachmentIcon({ file }: { file: ProjectFile }) {
     else if (['jpg', 'png', 'jpeg', 'webp', 'gif', 'svg', 'avif'].includes(e)) { Icon = FileImage; color = 'bg-blue-50 text-blue-600 dark:bg-blue-500/15'; }
     else if (['zip', 'rar', '7z', 'tar', 'gz'].includes(e)) { Icon = FileArchive; color = 'bg-violet-50 text-violet-500 dark:bg-violet-500/15'; }
     else if (['csv', 'xls', 'xlsx'].includes(e)) { Icon = FileSpreadsheet; color = 'bg-green-50 text-green-600 dark:bg-green-500/15'; }
-    return <span className={'grid size-10 shrink-0 place-items-center rounded-lg ' + color}><Icon className="size-5" strokeWidth={1.7} /></span>;
+    return <span className={'grid shrink-0 place-items-center ' + (compact ? 'size-8 rounded-md ' : 'size-10 rounded-lg ') + color}>
+        <Icon className={compact ? 'size-4' : 'size-5'} strokeWidth={1.7} />
+    </span>;
 }
 
 export function bytes(value: number) {
@@ -49,8 +51,8 @@ export function domain(value: string) {
 export function Avatar({ user, className = '' }: { user: Person; className?: string }) {
     return <UserAvatar user={user} className={'size-8 ring-2 ring-background ' + className} />;
 }
-export function SectionHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
-    return <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+export function SectionHeader({ title, subtitle, action, compact = false }: { title: string; subtitle?: string; action?: ReactNode; compact?: boolean }) {
+    return <div className={(compact ? 'mb-2' : 'mb-5') + ' flex flex-wrap items-center justify-between gap-3'}>
         <div><h2 className="text-base font-semibold tracking-tight">{title}</h2>{subtitle && <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>}</div>
         {action}
     </div>;
