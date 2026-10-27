@@ -206,6 +206,61 @@ class ProjectsTest extends TestCase
         $this->actingAs($owner)->get('/projects/'.$project->id.'/files/'.$file->id.'/download')->assertOk();
     }
 
+    public function test_json_upload_reports_each_saved_file_for_main_and_files_uploader(): void
+    {
+        Storage::fake('local');
+        $owner = User::factory()->create();
+        $project = $this->project($owner);
+
+        $this->actingAs($owner)->post('/projects/'.$project->id.'/files', [
+            'files' => [
+                UploadedFile::fake()->create('contract.pdf', 32, 'application/pdf'),
+                UploadedFile::fake()->create('photo.png', 16, 'image/png'),
+            ],
+        ], ['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+            ->assertCreated()
+            ->assertJsonCount(2, 'files')
+            ->assertJsonPath('files.0.name', 'contract.pdf')
+            ->assertJsonPath('files.1.name', 'photo.png');
+
+        $this->assertSame(2, $project->files()->count());
+        foreach ($project->files as $file) {
+            Storage::disk('local')->assertExists($file->path);
+        }
+    }
+
+    public function test_json_upload_gives_field_errors_and_saves_nothing_if_one_file_is_too_large(): void
+    {
+        Storage::fake('local');
+        $owner = User::factory()->create();
+        $project = $this->project($owner);
+
+        $this->actingAs($owner)->post('/projects/'.$project->id.'/files', [
+            'files' => [
+                UploadedFile::fake()->create('small.txt', 1, 'text/plain'),
+                UploadedFile::fake()->create('huge.zip', 22000, 'application/zip'),
+            ],
+        ], ['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('files.1');
+
+        $this->assertDatabaseCount('project_files', 0);
+    }
+
+    public function test_json_upload_denies_unauthorized_member_without_storing_files(): void
+    {
+        Storage::fake('local');
+        $owner = User::factory()->create();
+        $outsider = User::factory()->create();
+        $project = $this->project($owner);
+
+        $this->actingAs($outsider)->post('/projects/'.$project->id.'/files', [
+            'files' => [UploadedFile::fake()->create('secret.pdf', 1)],
+        ], ['Accept' => 'application/json'])->assertForbidden();
+
+        $this->assertDatabaseCount('project_files', 0);
+    }
+
     public function test_vault_secrets_are_encrypted_and_owner_only(): void
     {
         $owner = User::factory()->create();
