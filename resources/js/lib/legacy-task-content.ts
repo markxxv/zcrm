@@ -29,7 +29,7 @@ function inline(nodes: LegacyNode[] = []): JSONContent[] {
     const output: JSONContent[] = [];
     for (const node of nodes) {
         if (typeof node.text === 'string' && node.text.length > 0) {
-            const marks: JSONContent[] = [];
+            const marks: { type: string; attrs?: Record<string, unknown> }[] = [];
             for (const key of ['bold', 'italic', 'underline', 'strike', 'code'] as const) {
                 if (node[key]) marks.push({ type: key });
             }

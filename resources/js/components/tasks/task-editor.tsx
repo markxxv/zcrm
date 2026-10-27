@@ -187,6 +187,7 @@ export function TaskEditor({ taskId, content, onChange, onUploadingChange, place
     ).slice(0, 8);
 
     function execute(command: Command) {
+        if (!editor) return;
         if (slash !== null) {
             const end = editor.state.selection.from;
             editor.chain().focus().deleteRange({ from: end - slash.length - 1, to: end }).run();
