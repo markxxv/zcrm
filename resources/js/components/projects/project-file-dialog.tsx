@@ -1,61 +1,114 @@
 import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
-import { Download, Trash2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Download, FilePenLine, Tag, Trash2 } from 'lucide-react';
 import type { ProjectFile } from '@/types/project';
-import { AttachmentIcon, bytes, fieldClass, mutedButton, outlineButton, solidButton, fileDownloadUrl, fileActionUrl } from './resources';
+import { AttachmentIcon, bytes, fileDownloadUrl, fileActionUrl, outlineButton, solidButton } from './resources';
 import { UserAvatar } from '@/components/user-avatar';
+import { ProjectFormField, projectFieldInput } from './project-form-field';
+import { ProjectResponsiveDialog } from './project-responsive-dialog';
+import { ProjectChipsInput, normalizedChips } from './project-chips-input';
 
 type Props = {
     projectId: number;
     file: ProjectFile | null;
+    suggestions?: string[];
     onOpenChange: (open: boolean) => void;
     onDelete: (file: ProjectFile) => void;
 };
 
-export function ProjectFileDialog({ projectId, file, onOpenChange, onDelete }: Props) {
+export function ProjectFileDialog({
+    projectId, file, suggestions = [], onOpenChange, onDelete,
+}: Props) {
     const [filename, setFilename] = useState('');
-    const [tags, setTags] = useState('');
+    const [tags, setTags] = useState<string[]>([]);
+    const [tagDraft, setTagDraft] = useState('');
     const [busy, setBusy] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const base = file ? fileActionUrl(projectId, file) : '';
+
     useEffect(() => {
         if (!file) return;
         setFilename(file.name);
-        setTags((file.tags || []).join(', '));
+        setTags(file.tags || []);
+        setTagDraft('');
+        setBusy(false);
         setErrors({});
     }, [file]);
+
     const save = () => {
-        if (!file || !filename.trim()) return;
+        if (!file || busy) return;
+        if (!filename.trim()) {
+            setErrors({ name: 'Enter a filename.' });
+            return;
+        }
+        const rawTags = [...tags, tagDraft.trim()];
+        const trimmed = rawTags.filter((tag) => tag.trim());
+        if (trimmed.length > 20 || trimmed.some((tag) => tag.length > 40)) {
+            setErrors({ tags: 'Up to 20 tags, maximum 40 characters each.' });
+            return;
+        }
+        const normalized = normalizedChips(rawTags, 20, 40);
         setBusy(true);
-        router.patch(base, {
+        setErrors({});
+        router.patch(fileActionUrl(projectId, file), {
             name: filename.trim(),
-            ...(file.source === 'project' ? { tags: tags.split(',').map(t => t.trim()).filter(Boolean) } : {}),
+            ...(file.source === 'project' ? { tags: normalized } : {}),
         }, {
             preserveScroll: true,
             onSuccess: () => onOpenChange(false),
-            onError: (e) => setErrors(e),
+            onError: (issues) => setErrors(issues),
             onFinish: () => setBusy(false),
         });
     };
-    return <Dialog open={!!file} onOpenChange={onOpenChange}>
-        <DialogContent>
-            <DialogHeader><DialogTitle>File details</DialogTitle></DialogHeader>
-            {file && <div className="grid gap-4">
-                <div className="flex items-center gap-3">
-                    <AttachmentIcon file={file} projectId={projectId} />
-                    <span className="flex items-center gap-2 text-xs text-muted-foreground">{bytes(file.size)} · uploaded by {file.uploader && <UserAvatar user={file.uploader} className="size-6" />}{file.uploader?.name || 'Unknown'}</span>
+
+    return <ProjectResponsiveDialog open={!!file}
+        onOpenChange={onOpenChange} disabled={busy}
+        icon={FilePenLine} title="File details"
+        description="Rename and organize this file">
+        {file && <div className="space-y-4">
+            <div className="flex min-w-0 items-center gap-3 rounded-lg bg-muted/25 p-2.5">
+                <AttachmentIcon file={file} projectId={projectId} />
+                <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium">{file.name}</p>
+                    <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <span className="shrink-0">{bytes(file.size)}</span>
+                        <span>·</span>
+                        {file.uploader && <UserAvatar user={file.uploader} className="size-4" />}
+                        <span className="min-w-0 truncate">{file.uploader?.name || 'Unknown'}</span>
+                    </div>
                 </div>
-                <label className="grid gap-2 text-xs">Filename<input className={fieldClass} value={filename} onChange={e => setFilename(e.target.value)} /></label>
-                {file.task_title && <p className="text-xs text-muted-foreground">Attached to task: <span className="text-foreground">{file.task_title}</span></p>}
-                {file.source === 'project' && <label className="grid gap-2 text-xs">Tags, separated by commas<input className={fieldClass} value={tags} onChange={e => setTags(e.target.value)} /></label>}
-                {Object.values(errors).length > 0 && <p role="alert" className="text-xs text-red-600">{Object.values(errors)[0]}</p>}
-                <div className="flex items-center justify-end gap-2">
-                    <button type="button" className={mutedButton + ' mr-auto text-red-600'} onClick={() => { if (file) onDelete(file); }}><Trash2 className="size-4" /> Delete</button>
-                    <a href={fileDownloadUrl(projectId, file)} className={outlineButton}><Download className="size-4" /> Download</a>
-                    <button type="button" className={solidButton} disabled={busy} onClick={save}>{busy ? 'Saving…' : 'Save'}</button>
-                </div>
-            </div>}
-        </DialogContent>
-    </Dialog>;
+            </div>
+
+            {file.task_title && <p className="px-0.5 text-[11px] text-muted-foreground">
+                Attached to task: <span className="font-medium text-foreground">{file.task_title}</span>
+            </p>}
+
+            <ProjectFormField id="file-details-name" icon={FilePenLine}
+                title="Filename" error={errors.name}>
+                <input id="file-details-name" autoFocus autoComplete="off" disabled={busy}
+                    className={projectFieldInput} value={filename} maxLength={255}
+                    onChange={(event) => { setFilename(event.target.value); setErrors((current) => ({ ...current, name: '' })); }}
+                    onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); save(); } }} />
+            </ProjectFormField>
+
+            {file.source === 'project' && <ProjectChipsInput id="file-details-tags" label="Tags · optional"
+                values={tags} onChange={setTags} draft={tagDraft} onDraftChange={setTagDraft}
+                suggestions={suggestions} maxItems={20} maxLength={40}
+                placeholder="Type a tag and press Enter" disabled={busy} error={errors.tags} />}
+
+            {errors.general && <p role="alert" className="text-[11px] text-red-500">{errors.general}</p>}
+
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
+                <button type="button" disabled={busy} onClick={() => onDelete(file)}
+                    className="mr-auto inline-flex items-center gap-1.5 px-2 py-2 text-xs text-red-500 hover:text-red-600">
+                    <Trash2 className="size-3.5" /> Delete
+                </button>
+                <a href={fileDownloadUrl(projectId, file)} className={outlineButton}>
+                    <Download className="size-3.5" /> Download
+                </a>
+                <button type="button" disabled={busy} className={solidButton} onClick={save}>
+                    {busy ? 'Saving…' : 'Save changes'}
+                </button>
+            </div>
+        </div>}
+    </ProjectResponsiveDialog>;
 }
