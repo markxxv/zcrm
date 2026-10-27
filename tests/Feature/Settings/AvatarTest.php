@@ -37,7 +37,7 @@ class AvatarTest extends TestCase
         $this->get($user->avatar)
             ->assertOk()
             ->assertHeader('Content-Type', 'image/webp')
-            ->assertHeader('Cache-Control', 'private, max-age=86400');
+            ->assertHeader('Cache-Control', 'max-age=86400, private');
         $this->assertSame($user->avatar, $user->toArray()['avatar']);
         $this->assertArrayNotHasKey('avatar_path', $user->toArray());
     }
