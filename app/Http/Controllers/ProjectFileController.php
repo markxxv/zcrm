@@ -6,6 +6,8 @@ use App\Models\Project;
 use App\Models\ProjectFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 
 class ProjectFileController extends Controller
@@ -18,26 +20,49 @@ class ProjectFileController extends Controller
             'files.*' => ['required', 'file', 'max:20480'],
         ]);
 
-        foreach ($data['files'] as $upload) {
-            $name = Str::limit(basename(str_replace('\\', '/', $upload->getClientOriginalName())), 255, '');
-            $disk = config('filesystems.default', 'local');
-            $path = $upload->store("projects/{$project->id}", $disk);
+        $stored = [];
+        try {
+            $created = DB::transaction(function () use ($data, $project, $request, &$stored) {
+                $created = [];
 
-            try {
-                $project->files()->create([
-                    'name' => $name,
-                    'path' => $path,
-                    'disk' => $disk,
-                    'mime_type' => $upload->getMimeType(),
-                    'extension' => strtolower($upload->getClientOriginalExtension()),
-                    'size' => $upload->getSize(),
-                    'tags' => [],
-                    'uploaded_by' => $request->user()->id,
-                ]);
-            } catch (\Throwable $e) {
+                foreach ($data['files'] as $upload) {
+                    $name = Str::limit(basename(str_replace('\\', '/', $upload->getClientOriginalName())), 255, '');
+                    $disk = config('filesystems.default', 'local');
+                    $path = $upload->store("projects/{$project->id}", $disk);
+
+                    if ($path === false) {
+                        throw ValidationException::withMessages([
+                            'files' => 'Unable to save the uploaded file to storage. Check disk permissions and free space.',
+                        ]);
+                    }
+
+                    $stored[] = [$disk, $path];
+                    $created[] = $project->files()->create([
+                        'name' => $name,
+                        'path' => $path,
+                        'disk' => $disk,
+                        'mime_type' => $upload->getMimeType(),
+                        'extension' => strtolower($upload->getClientOriginalExtension()),
+                        'size' => $upload->getSize(),
+                        'tags' => [],
+                        'uploaded_by' => $request->user()->id,
+                    ]);
+                }
+
+                return $created;
+            });
+        } catch (\Throwable $exception) {
+            // A failed batch must not leave orphaned files or partially saved records.
+            foreach ($stored as [$disk, $path]) {
                 Storage::disk($disk)->delete($path);
-                throw $e;
             }
+            throw $exception;
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'files' => collect($created)->map(fn ($file) => $file->only(['id', 'name', 'size']))->all(),
+            ], 201);
         }
 
         return back();
