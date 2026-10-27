@@ -82,7 +82,7 @@ async function jsonRequest<T>(url: string, method = 'GET', payload?: FormData | 
 const iconButton = 'grid size-6 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40';
 const inlineField = 'min-w-0 rounded-md bg-muted/50 px-2 py-1.5 text-xs outline-none placeholder:text-muted-foreground/60 focus:bg-muted';
 
-export function TaskAttachments({ taskId }: { taskId: number }) {
+export function TaskAttachments({ taskId, onFilesChanged }: { taskId: number; onFilesChanged?: () => void }) {
     const base = '/tasks/' + taskId;
     const [files, setFiles] = useState<TaskFile[]>([]);
     const [links, setLinks] = useState<TaskLink[]>([]);
@@ -128,14 +128,17 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
         return () => controller.abort();
     }, [refresh]);
 
-    const run = async (callback: () => Promise<void>) => {
+    const run = async (callback: () => Promise<void>, filesChanged = false) => {
         if (busy) return;
         setBusy(true);
         setError('');
         const id = taskId;
         try {
             await callback();
-            if (currentTask.current === id) await refresh();
+            if (currentTask.current === id) {
+                await refresh();
+                if (filesChanged) onFilesChanged?.();
+            }
         } catch (err) {
             if (currentTask.current === id) setError(err instanceof Error ? err.message : 'Operation failed.');
         } finally {
@@ -156,7 +159,7 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
         void run(async () => {
             await jsonRequest(base + '/files', 'POST', body);
             if (uploadInput.current) uploadInput.current.value = '';
-        });
+        }, true);
     };
 
     const addLink = () => {
@@ -195,7 +198,7 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
         void run(async () => {
             await jsonRequest(base + '/files/' + id, 'PATCH', { name: renamedFile.trim() });
             setEditingFile(null);
-        });
+        }, true);
     };
 
     return <div className="space-y-4 text-xs">
@@ -232,7 +235,7 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
                                 <Pencil className="size-3.5" />
                             </button>
                             <button type="button" className={iconButton} disabled={busy} aria-label={'Remove ' + file.name}
-                                onClick={() => void run(async () => { await jsonRequest(base + '/files/' + file.id, 'DELETE'); })}>
+                                onClick={() => void run(async () => { await jsonRequest(base + '/files/' + file.id, 'DELETE'); }, true)}>
                                 <Trash2 className="size-3.5" />
                             </button>
                         </>

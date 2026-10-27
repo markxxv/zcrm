@@ -25,9 +25,10 @@ interface TaskDrawerProps {
   onOpenChange: (open: boolean) => void;
   availableUsers: Array<{ id: number; name: string; email: string; avatar: string | null }>;
   availableProjects: TaskProject[];
+  onFilesChanged?: () => void;
 }
 
-export function TaskDrawer({ task, open, onOpenChange, availableUsers, availableProjects }: TaskDrawerProps) {
+export function TaskDrawer({ task, open, onOpenChange, availableUsers, availableProjects, onFilesChanged }: TaskDrawerProps) {
   const { data, setData, patch, delete: destroy, processing, reset } = useForm({
     task_id: 0,
     title: '',
@@ -161,7 +162,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
               </div>
 
               {/* Compact inline files and links, shared between Tasks and Projects. */}
-              <TaskAttachments key={task.id} taskId={task.id} />
+              <TaskAttachments key={task.id} taskId={task.id} onFilesChanged={onFilesChanged} />
 
               {/* Due Date */}
               <div className="space-y-2">

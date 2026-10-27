@@ -229,7 +229,8 @@ export default function ProjectShow(props: ProjectShowProps) {
         </div>
 
         <TaskDrawer task={taskDrawer} open={taskDrawer !== null} onOpenChange={(open) => { if (!open) setTaskDrawer(null); }}
-            availableUsers={availableUsers} availableProjects={availableProjects} />
+            availableUsers={availableUsers} availableProjects={availableProjects}
+            onFilesChanged={() => router.reload({ only: ['recentFiles', 'files', 'counts'] })} />
 
         <ProjectLinkDialog projectId={project.id} open={linkDialogOpen} link={editingLink} onOpenChange={setLinkDialogOpen} />
         <ProjectFileDialog projectId={project.id} file={editingFile} onOpenChange={(open) => { if (!open) setEditingFile(null); }} />
