@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChunkUploadController;
 use App\Http\Controllers\ProjectAccessController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectFileController;
@@ -19,6 +20,15 @@ Route::get('/', fn () => Inertia::render('welcome', [
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+
+    // Shared resumable chunk protocol for both Project and Task file attachments.
+    Route::post('/uploads/start', [ChunkUploadController::class, 'start'])->name('uploads.start');
+    Route::get('/uploads/{upload}', [ChunkUploadController::class, 'status'])->name('uploads.status');
+    Route::post('/uploads/{upload}/chunks/{index}', [ChunkUploadController::class, 'chunk'])
+        ->whereNumber('index')->name('uploads.chunks');
+    Route::post('/uploads/{upload}/assemble', [ChunkUploadController::class, 'assemble'])->name('uploads.assemble');
+    Route::post('/uploads/{upload}/complete', [ChunkUploadController::class, 'complete'])->name('uploads.complete');
+    Route::delete('/uploads/{upload}', [ChunkUploadController::class, 'destroy'])->name('uploads.cancel');
 
     Route::match(['get', 'post', 'patch', 'delete'], '/tasks', [TaskController::class, 'index'])->name('tasks.index');
 
