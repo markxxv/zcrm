@@ -135,7 +135,11 @@ class ProjectController extends Controller
             'pinnedLinks' => $project->links()->where('pinned', true)->latest()->limit(6)->get(),
             'recentFiles' => $project->files()->with('uploader:id,name')->latest()->limit(5)->get(),
             'files' => $tab === 'files' ? $fileQuery->paginate(20)->withQueryString() : null,
-            'links' => $tab === 'links' ? $linkQuery->orderByDesc('created_at')->paginate(25)->withQueryString() : null,
+            'links' => $tab === 'links' ? (match ($sort) {
+                    'name' => $linkQuery->orderBy('title'),
+                    'oldest' => $linkQuery->oldest(),
+                    default => $linkQuery->latest(),
+                })->paginate(25)->withQueryString() : null,
             'accesses' => $canAccess && $tab === 'access'
                 ? $accessQuery->latest()->paginate(25)->withQueryString() : null,
             'counts' => ['files' => $project->files()->count(), 'links' => $project->links()->count()],

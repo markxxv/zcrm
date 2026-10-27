@@ -5,12 +5,12 @@ import { TaskDrawer } from '@/components/tasks/task-drawer';
 import { ProjectFiles } from '@/components/projects/project-files';
 import { ProjectLinks } from '@/components/projects/project-links';
 import { ProjectAccessTab } from '@/components/projects/project-access';
-import { AttachmentIcon, Avatar, SectionHeader, ServiceIcon, bytes, displayDate, domain, fieldClass, mutedButton, outlineButton, solidButton } from '@/components/projects/resources';
+import { AttachmentIcon, Avatar, SectionHeader, ServiceIcon, bytes, domain, fieldClass, mutedButton, outlineButton, solidButton } from '@/components/projects/resources';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, ChevronRight, ArrowUpRight, FolderKanban, Settings2, Check, CheckCheck, Clock, Link2, Files, KeyRound, LayoutGrid, Users, Trash2, Pencil, UploadCloud } from 'lucide-react';
+import { Plus, ChevronRight, ArrowUpRight, Settings2, Check, Link2, Files, KeyRound, LayoutGrid, Users, Trash2, Pencil, UploadCloud } from 'lucide-react';
 import type { SharedData } from '@/types';
 import type { Task, TaskPriority } from '@/types/task';
-import type { ProjectShowProps, Person, ProjectLink } from '@/types/project';
+import type { ProjectShowProps, Person } from '@/types/project';
 
 const tabs = [
     { key: 'main', title: 'Main', Icon: LayoutGrid },
@@ -52,7 +52,6 @@ export default function ProjectShow(props: ProjectShowProps) {
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [quickTitle, setQuickTitle] = useState('');
     const [mainUploading, setMainUploading] = useState(false);
-    const [pinLink, setPinLink] = useState<ProjectLink | null>(null);
     const fileRef = useRef<HTMLInputElement>(null);
     const base = '/projects/' + project.id;
 

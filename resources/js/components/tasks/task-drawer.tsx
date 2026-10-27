@@ -15,7 +15,7 @@ import { PrioritySelector } from './priority-selector';
 import { ProjectSelector } from './project-selector';
 import type { TaskProject } from '@/types/task';
 import { UserAssignment } from './user-assignment';
-import { Task } from '@/types/task';
+import { Task, TaskPriority } from '@/types/task';
 import { X, Trash2 } from 'lucide-react';
 
 interface TaskDrawerProps {
@@ -31,7 +31,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
     task_id: 0,
     title: '',
     description: '',
-    priority: 'medium' as const,
+    priority: 'medium' as TaskPriority,
     due_date: '',
     assigned_user_ids: [] as number[],
     project_ids: [] as number[],
