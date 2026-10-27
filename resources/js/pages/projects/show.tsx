@@ -12,9 +12,10 @@ import { ProjectFileDeleteDialog } from '@/components/projects/project-file-dele
 import { ProjectFileUploader } from '@/components/projects/project-file-uploader';
 import { ProjectFileRow } from '@/components/projects/project-file-row';
 import { ProjectAccessTab } from '@/components/projects/project-access';
-import { AttachmentIcon, Avatar, SectionHeader, ServiceIcon, bytes, domain, fieldClass, mutedButton, outlineButton, solidButton } from '@/components/projects/resources';
+import { ProjectSettingsDialog } from '@/components/projects/project-settings-dialog';
+import { AttachmentIcon, Avatar, SectionHeader, ServiceIcon, bytes, domain, mutedButton, outlineButton, solidButton } from '@/components/projects/resources';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, ChevronRight, ArrowUpRight, Settings2, Check, Link2, Files, KeyRound, LayoutGrid, Users, Trash2, Pencil } from 'lucide-react';
+import { Plus, ChevronRight, ArrowUpRight, Settings2, Check, Link2, Files, KeyRound, LayoutGrid, Users, Pencil } from 'lucide-react';
 import type { SharedData } from '@/types';
 import type { Task, TaskPriority } from '@/types/task';
 import type { ProjectShowProps, Person, ProjectLink, ProjectFile } from '@/types/project';
@@ -45,9 +46,6 @@ export default function ProjectShow(props: ProjectShowProps) {
     const [taskFilter, setTaskFilter] = useState<'open' | 'all' | 'completed'>('open');
     const [taskDrawer, setTaskDrawer] = useState<Task | null>(null);
     const [settingsOpen, setSettingsOpen] = useState(false);
-    const [projectName, setProjectName] = useState(project.name);
-    const [projectDescription, setProjectDescription] = useState(project.description || '');
-    const [projectStatus, setProjectStatus] = useState(project.status);
     const [membersOpen, setMembersOpen] = useState(false);
     const [memberIds, setMemberIds] = useState<number[]>(project.members.map((user) => user.id));
     const [formBusy, setFormBusy] = useState(false);
@@ -88,13 +86,6 @@ export default function ProjectShow(props: ProjectShowProps) {
     const toggleTask = (task: Task) => {
         router.patch('/tasks', { task_id: task.id, is_completed: !task.is_completed }, { preserveScroll: true });
     };
-    const saveProject = () => {
-        setFormBusy(true); setFormErrors({});
-        router.patch(base, { name: projectName, description: projectDescription, status: projectStatus }, {
-            preserveScroll: true, onSuccess: () => setSettingsOpen(false),
-            onError: setFormErrors, onFinish: () => setFormBusy(false),
-        });
-    };
     const saveMembers = () => {
         setFormBusy(true); setFormErrors({});
         router.put(base + '/members', { member_ids: memberIds }, {
@@ -102,15 +93,7 @@ export default function ProjectShow(props: ProjectShowProps) {
             onError: setFormErrors, onFinish: () => setFormBusy(false),
         });
     };
-    const deleteProject = () => {
-        if (window.confirm('Permanently delete this project and its files, links and credentials? Tasks will be kept.')) {
-            router.delete(base);
-        }
-    };
-    const settings = () => {
-        setProjectName(project.name); setProjectDescription(project.description || ''); setProjectStatus(project.status);
-        setFormErrors({}); setSettingsOpen(true);
-    };
+    const settings = () => setSettingsOpen(true);
     const team = () => { setMemberIds(project.members.map((user) => user.id)); setFormErrors({}); setMembersOpen(true); };
 
     return <AppLayout breadcrumbs={[{ title: 'Projects', href: '/projects' }, { title: project.name, href: base }]}>
@@ -239,18 +222,7 @@ export default function ProjectShow(props: ProjectShowProps) {
         <ProjectLinkDialog projectId={project.id} open={linkDialogOpen} link={editingLink} onOpenChange={setLinkDialogOpen} />
         <ProjectFileDialog projectId={project.id} file={editingFile} onOpenChange={(open) => { if (!open) setEditingFile(null); }} onDelete={(file) => { setEditingFile(null); setDeletingFile(file); }} />
         <ProjectFileDeleteDialog projectId={project.id} file={deletingFile} onClose={() => setDeletingFile(null)} />
-        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-            <DialogContent>
-                <DialogHeader><DialogTitle>Project settings</DialogTitle></DialogHeader>
-                <div className="grid gap-4">
-                    <label className="grid gap-2 text-xs">Project name<input className={fieldClass} value={projectName} onChange={(event) => setProjectName(event.target.value)} /></label>
-                    <label className="grid gap-2 text-xs">Description<textarea className={fieldClass + ' min-h-24'} value={projectDescription} onChange={(event) => setProjectDescription(event.target.value)} /></label>
-                    <label className="grid gap-2 text-xs">Status<select className={fieldClass} value={projectStatus} onChange={(event) => setProjectStatus(event.target.value as typeof projectStatus)}><option value="active">Active</option><option value="paused">Paused</option><option value="archived">Archived</option></select></label>
-                    {Object.values(formErrors).length > 0 && <p className="text-xs text-red-600">{Object.values(formErrors)[0]}</p>}
-                    <div className="flex justify-end gap-2"><button className={mutedButton + ' mr-auto text-red-600'} onClick={deleteProject}><Trash2 className="size-4" /> Delete</button><button className={outlineButton} onClick={() => setSettingsOpen(false)}>Cancel</button><button className={solidButton} disabled={formBusy} onClick={saveProject}>Save project</button></div>
-                </div>
-            </DialogContent>
-        </Dialog>
+        <ProjectSettingsDialog project={project} open={settingsOpen} onOpenChange={setSettingsOpen} />
         <Dialog open={membersOpen} onOpenChange={setMembersOpen}>
             <DialogContent>
                 <DialogHeader><DialogTitle>Project members</DialogTitle></DialogHeader>
