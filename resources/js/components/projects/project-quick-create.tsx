@@ -11,7 +11,7 @@ export function ProjectQuickCreate() {
     const [open, setOpen] = useState(false);
 
     const trigger = <SidebarMenuAction type="button" title="New project" aria-label="Create project"
-        className="size-7 rounded-lg text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+        className="top-1/2 -translate-y-1/2 peer-data-[size=default]/menu-button:top-1/2 size-7 rounded-lg text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden">
         <Plus className="size-4" />
     </SidebarMenuAction>;
 

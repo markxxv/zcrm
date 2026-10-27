@@ -98,9 +98,6 @@ export function ProjectCreateForm({ compact = false, onClose }: Props) {
             {errors.status && <p role="alert" className="px-1 text-[11px] text-red-500">{errors.status}</p>}
         </>}
 
-        {compact && <p className="px-1 text-[11px] text-muted-foreground">
-            Active · No description
-        </p>}
         <div className="flex justify-end gap-2 pt-1">
             <button type="button" disabled={busy} className="rounded-lg px-3 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50" onClick={onClose}>Cancel</button>
             <button type="button" disabled={busy || !name.trim()} onClick={submit}
