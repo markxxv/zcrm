@@ -2,15 +2,18 @@ import { useMemo, useRef, useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { TaskDrawer } from '@/components/tasks/task-drawer';
+import { TaskInput } from '@/components/tasks/task-input';
 import { ProjectFiles } from '@/components/projects/project-files';
 import { ProjectLinks } from '@/components/projects/project-links';
+import { ProjectLinkDialog } from '@/components/projects/project-link-dialog';
+import { ProjectFileDialog } from '@/components/projects/project-file-dialog';
 import { ProjectAccessTab } from '@/components/projects/project-access';
 import { AttachmentIcon, Avatar, SectionHeader, ServiceIcon, bytes, domain, fieldClass, mutedButton, outlineButton, solidButton } from '@/components/projects/resources';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, ChevronRight, ArrowUpRight, Settings2, Check, Link2, Files, KeyRound, LayoutGrid, Users, Trash2, Pencil, UploadCloud } from 'lucide-react';
 import type { SharedData } from '@/types';
 import type { Task, TaskPriority } from '@/types/task';
-import type { ProjectShowProps, Person } from '@/types/project';
+import type { ProjectShowProps, Person, ProjectLink, ProjectFile } from '@/types/project';
 
 const tabs = [
     { key: 'main', title: 'Main', Icon: LayoutGrid },
@@ -37,11 +40,6 @@ export default function ProjectShow(props: ProjectShowProps) {
     const [taskSearch, setTaskSearch] = useState('');
     const [taskFilter, setTaskFilter] = useState<'open' | 'all' | 'completed'>('open');
     const [taskDrawer, setTaskDrawer] = useState<Task | null>(null);
-    const [createOpen, setCreateOpen] = useState(false);
-    const [createTitle, setCreateTitle] = useState('');
-    const [createPriority, setCreatePriority] = useState<TaskPriority>('medium');
-    const [createDate, setCreateDate] = useState(todayDate());
-    const [createBusy, setCreateBusy] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [projectName, setProjectName] = useState(project.name);
     const [projectDescription, setProjectDescription] = useState(project.description || '');
@@ -50,9 +48,12 @@ export default function ProjectShow(props: ProjectShowProps) {
     const [memberIds, setMemberIds] = useState<number[]>(project.members.map((user) => user.id));
     const [formBusy, setFormBusy] = useState(false);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-    const [quickTitle, setQuickTitle] = useState('');
     const [mainUploading, setMainUploading] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
+    const taskInputRef = useRef<HTMLInputElement>(null);
+    const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+    const [editingLink, setEditingLink] = useState<ProjectLink | null>(null);
+    const [editingFile, setEditingFile] = useState<ProjectFile | null>(null);
     const base = '/projects/' + project.id;
 
     const openTasks = tasks.filter((task) => !task.is_completed);
@@ -67,14 +68,19 @@ export default function ProjectShow(props: ProjectShowProps) {
     const changeTab = (tab: string) => {
         router.get(base, { tab }, { preserveScroll: true, preserveState: false });
     };
-    const submitTask = (title: string, priority: TaskPriority = 'medium', due_date = todayDate()) => {
+    const submitTask = (title: string) => {
         if (!title.trim()) return;
-        setCreateBusy(true);
-        router.post('/tasks', { title: title.trim(), priority, due_date, project_ids: [project.id], assigned_user_ids: [me] }, {
-            preserveScroll: true,
-            onSuccess: () => { setQuickTitle(''); setCreateTitle(''); setCreateOpen(false); },
-            onFinish: () => setCreateBusy(false),
-        });
+        router.post('/tasks', {
+            title: title.trim(),
+            priority: 'medium',
+            due_date: todayDate(),
+            project_ids: [project.id],
+            assigned_user_ids: [me],
+        }, { preserveScroll: true });
+    };
+    const editLink = (link: ProjectLink | null) => {
+        setEditingLink(link);
+        setLinkDialogOpen(true);
     };
     const toggleTask = (task: Task) => {
         router.patch('/tasks', { task_id: task.id, is_completed: !task.is_completed }, { preserveScroll: true });
@@ -153,18 +159,18 @@ export default function ProjectShow(props: ProjectShowProps) {
 
             {filters.tab === 'main' && <div className="grid grid-cols-1 items-start gap-10 xl:grid-cols-[minmax(0,1.75fr)_minmax(285px,1fr)] xl:gap-16">
                 <section className="min-w-0">
-                    <SectionHeader title={'Tasks · ' + tasks.length} subtitle="Tasks linked to this project" action={<button className={outlineButton} onClick={() => { setCreateDate(todayDate()); setCreatePriority('medium'); setCreateOpen(true); }}><Plus className="size-4" /> New task</button>} />
+                    <SectionHeader title={'Tasks · ' + tasks.length} subtitle="Tasks linked to this project" action={<button className={outlineButton} onClick={() => taskInputRef.current?.focus()}><Plus className="size-4" /> New task</button>} />
                     <div className="mb-7 flex gap-6 text-[11px] text-muted-foreground">
                         <span><b className="mr-1 font-semibold text-foreground">{openTasks.length}</b> Open</span>
                         <span><b className="mr-1 font-semibold text-foreground">{completedTasks.length}</b> Completed</span>
                         <span><b className="mr-1 font-semibold text-red-500">{overdue.length}</b> Overdue</span>
                     </div>
-                    <div className="mb-5 flex items-center gap-3 rounded-xl bg-muted/40 px-4 py-3.5">
-                        <Plus className="size-4 shrink-0 text-muted-foreground" />
-                        <input value={quickTitle} onChange={(event) => setQuickTitle(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && quickTitle.trim()) submitTask(quickTitle); }}
-                            placeholder="Add a task to this project…" className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground/70" />
-                        <span className="hidden text-[10px] text-muted-foreground sm:block">↵ Enter</span>
-                    </div>
+                    <TaskInput
+                        compact
+                        inputRef={taskInputRef}
+                        placeholder="Add a task to this project…"
+                        onCreateTask={submitTask}
+                    />
                     <div className="mb-1 flex flex-wrap items-center gap-5 border-b border-border/60 pb-3">
                         {(['open', 'all', 'completed'] as const).map((filter) => <button key={filter} onClick={() => setTaskFilter(filter)}
                             className={'text-xs capitalize ' + (taskFilter === filter ? 'font-semibold text-foreground' : 'text-muted-foreground')}>{filter === 'all' ? 'All tasks' : filter}</button>)}
@@ -192,16 +198,36 @@ export default function ProjectShow(props: ProjectShowProps) {
                 <aside className="min-w-0 space-y-11">
                     <section>
                         <SectionHeader title="Pinned links" action={<button className={mutedButton} onClick={() => changeTab('links')}>View all <ArrowUpRight className="size-4" /></button>} />
-                        <div className="space-y-1">{pinnedLinks.length ? pinnedLinks.map((link) => <a key={link.id} target="_blank" rel="noopener noreferrer" href={link.url} className="flex items-center gap-3 rounded-lg py-2 hover:bg-muted/30">
-                            <ServiceIcon kind={link.kind} /><span className="min-w-0 flex-1"><span className="block truncate text-xs font-medium">{link.title}</span><span className="mt-1 block truncate text-[10px] text-muted-foreground">{domain(link.url)} · {link.category || 'General'}</span></span><ArrowUpRight className="size-4 shrink-0 text-muted-foreground/50" />
-                        </a>) : <p className="py-5 text-xs text-muted-foreground">No pinned links yet.</p>}</div>
-                        <button className={mutedButton + ' mt-3'} onClick={() => changeTab('links')}><Plus className="size-4" /> Add link</button>
+                        <div className="space-y-1">{pinnedLinks.length ? pinnedLinks.map((link) =>
+                            <div key={link.id} className="group flex min-w-0 items-center gap-3 rounded-lg py-2 hover:bg-muted/30">
+                                <ServiceIcon kind={link.kind} />
+                                <a target="_blank" rel="noopener noreferrer" href={link.url} className="min-w-0 flex-1" title={'Open ' + link.title}>
+                                    <span className="block truncate text-xs font-medium">{link.title}</span>
+                                    <span className="mt-1 block truncate text-[10px] text-muted-foreground">{domain(link.url)} · {link.category || 'General'}</span>
+                                </a>
+                                <button type="button" onClick={() => editLink(link)} className={mutedButton} aria-label={'Edit ' + link.title} title="Rename, pin, edit or delete">
+                                    <Pencil className="size-4" />
+                                </button>
+                            </div>
+                        ) : <p className="py-5 text-xs text-muted-foreground">No pinned links yet.</p>}</div>
+                        <button className={mutedButton + ' mt-3'} onClick={() => editLink(null)}><Plus className="size-4" /> Add link</button>
                     </section>
                     <section>
                         <SectionHeader title="Recent files" action={<button className={mutedButton} onClick={() => changeTab('files')}>All files <ArrowUpRight className="size-4" /></button>} />
-                        <div className="space-y-1">{recentFiles.length ? recentFiles.slice(0, 3).map((file) => <a key={file.id} href={base + '/files/' + file.id + '/download'} className="flex items-center gap-3 rounded-lg py-2 hover:bg-muted/30">
-                            <AttachmentIcon file={file} /><span className="min-w-0 flex-1"><span className="block truncate text-xs font-medium">{file.name}</span><span className="mt-1 block text-[10px] text-muted-foreground">{bytes(file.size)} · {file.uploader?.name || 'Unknown'}</span></span><ArrowUpRight className="size-4 shrink-0 text-muted-foreground/50" />
-                        </a>) : <p className="py-5 text-xs text-muted-foreground">No uploaded files yet.</p>}</div>
+                        <div className="space-y-1">{recentFiles.length ? recentFiles.slice(0, 3).map((file) =>
+                            <div key={file.id} className="group flex min-w-0 items-center gap-3 rounded-lg py-2 hover:bg-muted/30">
+                                <AttachmentIcon file={file} />
+                                <a href={base + '/files/' + file.id + '/download'} className="min-w-0 flex-1">
+                                    <span className="block truncate text-xs font-medium">{file.name}</span>
+                                    <span className="mt-1 block text-[10px] text-muted-foreground">{bytes(file.size)} · {file.uploader?.name || 'Unknown'}</span>
+                                </a>
+                                {(file.uploaded_by === me || canManage) &&
+                                    <button type="button" className={mutedButton} onClick={() => setEditingFile(file)} title="Rename or manage file" aria-label={'Edit ' + file.name}>
+                                        <Pencil className="size-4" />
+                                    </button>
+                                }
+                            </div>
+                        ) : <p className="py-5 text-xs text-muted-foreground">No uploaded files yet.</p>}</div>
                         <input ref={fileRef} type="file" className="hidden" multiple onChange={(event) => uploadMain(event.target.files)} />
                         <button disabled={mainUploading} className="mt-4 flex w-full items-center gap-3 rounded-xl bg-muted/35 px-4 py-4 text-left hover:bg-muted/60 disabled:opacity-50" onClick={() => fileRef.current?.click()}>
                             <span className="grid size-9 place-items-center rounded-lg bg-background"><UploadCloud className="size-5 text-muted-foreground" /></span>
@@ -224,18 +250,8 @@ export default function ProjectShow(props: ProjectShowProps) {
         <TaskDrawer task={taskDrawer} open={taskDrawer !== null} onOpenChange={(open) => { if (!open) setTaskDrawer(null); }}
             availableUsers={availableUsers} availableProjects={availableProjects} />
 
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-            <DialogContent>
-                <DialogHeader><DialogTitle>New project task</DialogTitle></DialogHeader>
-                <div className="grid gap-4">
-                    <label className="grid gap-2 text-xs">Title<input className={fieldClass} autoFocus value={createTitle} onChange={(event) => setCreateTitle(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') submitTask(createTitle, createPriority, createDate); }} /></label>
-                    <label className="grid gap-2 text-xs">Due date<input className={fieldClass} type="date" value={createDate} onChange={(event) => setCreateDate(event.target.value)} /></label>
-                    <label className="grid gap-2 text-xs">Priority<select className={fieldClass} value={createPriority} onChange={(event) => setCreatePriority(event.target.value as TaskPriority)}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></label>
-                    <p className="text-[11px] text-muted-foreground">The task will be linked to {project.name} and assigned to you. Change assignees or add more projects in task details.</p>
-                    <div className="flex justify-end gap-2"><button className={outlineButton} onClick={() => setCreateOpen(false)}>Cancel</button><button disabled={createBusy || !createTitle.trim()} className={solidButton} onClick={() => submitTask(createTitle, createPriority, createDate)}>Create task</button></div>
-                </div>
-            </DialogContent>
-        </Dialog>
+        <ProjectLinkDialog projectId={project.id} open={linkDialogOpen} link={editingLink} onOpenChange={setLinkDialogOpen} />
+        <ProjectFileDialog projectId={project.id} file={editingFile} onOpenChange={(open) => { if (!open) setEditingFile(null); }} />
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
             <DialogContent>
                 <DialogHeader><DialogTitle>Project settings</DialogTitle></DialogHeader>

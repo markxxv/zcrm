@@ -120,21 +120,20 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
                 />
               </div>
 
-              {/* Priority */}
-              <div className="space-y-2">
+              {/* Shared task metadata controls: the same layout on Tasks and Projects. */}
+              <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
                 <PrioritySelector
                   value={data.priority}
                   onChange={(value) => setData('priority', value)}
                   disabled={processing}
                 />
+                <ProjectSelector
+                  projects={availableProjects}
+                  value={data.project_ids}
+                  onChange={(ids) => setData('project_ids', ids)}
+                  disabled={processing}
+                />
               </div>
-
-              <ProjectSelector
-                projects={availableProjects}
-                value={data.project_ids}
-                onChange={(ids) => setData('project_ids', ids)}
-                disabled={processing}
-              />
 
               {/* Assigned Users */}
               <div className="space-y-2 flex gap-4 items-center">
