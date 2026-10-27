@@ -30,6 +30,7 @@ interface TaskDrawerProps {
 
 export function TaskDrawer({ task, open, onOpenChange, availableUsers, availableProjects, onFilesChanged }: TaskDrawerProps) {
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [loadedTaskId, setLoadedTaskId] = useState<number | null>(null);
   const { data, setData, patch, delete: destroy, processing, reset } = useForm({
     task_id: 0,
     title: '',
@@ -51,6 +52,9 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
         assigned_user_ids: task.assigned_users.map(u => u.id),
         project_ids: (task.projects || []).filter(p => availableProjects.some(available => available.id === p.id)).map(p => p.id),
       });
+      setLoadedTaskId(task.id);
+    } else {
+      setLoadedTaskId(null);
     }
   }, [task, availableProjects]);
 
@@ -155,7 +159,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
               {/* Description */}
               <div className="space-y-2">
                 <Label htmlFor="description" className="text-sm font-medium">Description</Label>
-                <Suspense fallback={<div className="min-h-44 rounded-xl bg-muted/30" />}>
+                {loadedTaskId === task.id ? <Suspense fallback={<div className="min-h-44 rounded-xl bg-muted/30" />}>
                   <TaskEditor
                     key={task.id}
                     taskId={task.id}
@@ -164,7 +168,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
                     onUploadingChange={setUploadingImage}
                     placeholder="Add a description..."
                   />
-                </Suspense>
+                </Suspense> : <div className="min-h-44 rounded-xl bg-muted/30" />}
               </div>
 
               {/* Compact inline files and links, shared between Tasks and Projects. */}
