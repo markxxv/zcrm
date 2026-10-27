@@ -3,6 +3,7 @@ import {
     FileJson, FileSpreadsheet, FileText, FileVideo, Presentation, Terminal,
     type LucideIcon,
 } from 'lucide-react';
+import { useState } from 'react';
 
 type FileAppearance = {
     label?: string;
@@ -13,7 +14,8 @@ type FileAppearance = {
 type Props = {
     name: string;
     extension?: string | null;
-    size?: 'normal' | 'compact' | 'inline';
+    size?: 'normal' | 'compact' | 'inline' | 'grid';
+    thumbnailUrl?: string;
 };
 
 const word = 'bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-400';
@@ -85,18 +87,33 @@ function fileExtension(name: string, extension?: string | null): string {
 }
 
 /** One small, brand-colored file mark shared by project and task attachments. */
-export function FileTypeIcon({ name, extension, size = 'normal' }: Props) {
+export function FileTypeIcon({ name, extension, size = 'normal', thumbnailUrl }: Props) {
+    const [failedUrl, setFailedUrl] = useState<string | null>(null);
     const ext = fileExtension(name, extension);
     const appearance = types[ext] || { icon: File, colors: neutral };
     const Icon = appearance.icon;
     const small = size !== 'normal';
     const inline = size === 'inline';
+    const grid = size === 'grid';
+    const isRaster = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'].includes(ext);
+    const preview = isRaster && thumbnailUrl && failedUrl !== thumbnailUrl ? thumbnailUrl : null;
+
+    if (preview) {
+        return <span className={
+            'block shrink-0 overflow-hidden bg-muted ' +
+            (grid ? 'h-full w-full rounded-lg' : inline ? 'size-5 rounded' : small ? 'size-8 rounded-md' : 'size-10 rounded-lg')
+        }>
+            <img src={preview} alt="" draggable={false} loading="lazy" decoding="async"
+                width={128} height={128} className="h-full w-full object-cover"
+                onError={() => setFailedUrl(preview)} />
+        </span>;
+    }
 
     return <span
         title={ext ? ext.toUpperCase() + ' file' : 'File'}
         aria-hidden="true"
         className={'grid shrink-0 place-items-center font-bold tracking-tight ' +
-            (inline ? 'size-5 rounded' : small ? 'size-8 rounded-md' : 'size-10 rounded-lg') +
+            (grid ? 'size-10 rounded-lg' : inline ? 'size-5 rounded' : small ? 'size-8 rounded-md' : 'size-10 rounded-lg') +
             ' ' + appearance.colors}
     >
         {appearance.label

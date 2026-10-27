@@ -21,7 +21,7 @@ export function ProjectFileRow({ projectId, file, canEdit, onEdit, onDelete, com
         'group flex min-w-0 items-center ' +
         (compact ? 'gap-2 rounded-md py-1.5 hover:bg-muted/30' : 'gap-3 py-3.5')
     }>
-        <AttachmentIcon file={file} compact={compact} />
+        <AttachmentIcon file={file} projectId={projectId} compact={compact} />
         <a href={fileDownloadUrl(projectId, file)}
             className="min-w-0 flex-1"
             title={'Download ' + file.name}>

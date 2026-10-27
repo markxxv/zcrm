@@ -25,8 +25,15 @@ export function ServiceIcon({ kind }: { kind: ProjectLink['kind'] }) {
     return <span className={'grid size-10 shrink-0 place-items-center rounded-lg ' + styles[kind]}><Icon className="size-5" strokeWidth={1.7} /></span>;
 }
 
-export function AttachmentIcon({ file, compact = false }: { file: ProjectFile; compact?: boolean }) {
-    return <FileTypeIcon name={file.name} extension={file.extension} size={compact ? 'compact' : 'normal'} />;
+export function AttachmentIcon({ file, projectId, compact = false, grid = false }: {
+    file: ProjectFile;
+    projectId: number;
+    compact?: boolean;
+    grid?: boolean;
+}) {
+    return <FileTypeIcon name={file.name} extension={file.extension}
+        size={grid ? 'grid' : compact ? 'compact' : 'normal'}
+        thumbnailUrl={fileThumbnailUrl(projectId, file)} />;
 }
 
 export function bytes(value: number) {
@@ -85,6 +92,13 @@ export function FilterSelect({ value, onChange, options }: { value: string; onCh
         </select>
         <ChevronDown className="pointer-events-none absolute right-2.5 top-3 size-3 text-muted-foreground" />
     </div>;
+}
+
+export function fileThumbnailUrl(projectId: number, file: ProjectFile): string {
+    const base = '/projects/' + projectId;
+    return file.source === 'task'
+        ? base + '/task-files/' + file.id + '/thumbnail'
+        : base + '/files/' + file.id + '/thumbnail';
 }
 
 export function fileDownloadUrl(projectId: number, file: ProjectFile): string {

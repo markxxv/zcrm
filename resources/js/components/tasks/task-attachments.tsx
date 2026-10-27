@@ -186,7 +186,8 @@ export function TaskAttachments({ taskId, onFilesChanged }: { taskId: number; on
             </div>
             {files.length > 0 && <div className="space-y-0.5">
                 {files.map((file) => <div key={file.id} className="group flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1.5 hover:bg-muted/40">
-                    <FileTypeIcon name={file.name} extension={file.extension} size="inline" />
+                    <FileTypeIcon name={file.name} extension={file.extension} size="inline"
+                        thumbnailUrl={base + '/files/' + file.id + '/thumbnail'} />
                     {editingFile === file.id ? (
                         <>
                             <input autoFocus className={inlineField + ' flex-1'} aria-label="Filename"

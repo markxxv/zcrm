@@ -30,7 +30,7 @@ export function ProjectFiles({ projectId, page, filters }: Props) {
         </div>
         {(page?.data || []).length ? grid ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {page?.data.map((file) => <div key={file.id} className="min-w-0 rounded-xl bg-muted/30 p-3">
-                <a href={download(file)} className="mb-3 grid h-28 place-items-center rounded-lg bg-muted/60"><AttachmentIcon file={file} /></a>
+                <a href={download(file)} className="mb-3 grid h-28 place-items-center rounded-lg bg-muted/60"><AttachmentIcon file={file} projectId={projectId} grid /></a>
                 <p className="truncate text-xs font-medium" title={file.name}>{file.name}</p>
                 <p className="mt-1 truncate text-[10px] text-muted-foreground" title={file.task_title || 'Project file'}>{file.task_title ? 'Task: ' + file.task_title : 'Project file'}</p>
                 <div className="mt-2 flex items-center gap-1.5 text-[10px] text-muted-foreground">{file.uploader && <UserAvatar user={file.uploader} className="size-5" />}{bytes(file.size)} · {displayDate(file.created_at)}</div>
