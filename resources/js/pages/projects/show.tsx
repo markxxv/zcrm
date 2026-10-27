@@ -7,10 +7,12 @@ import { ProjectFiles } from '@/components/projects/project-files';
 import { ProjectLinks } from '@/components/projects/project-links';
 import { ProjectLinkDialog } from '@/components/projects/project-link-dialog';
 import { ProjectFileDialog } from '@/components/projects/project-file-dialog';
+import { ProjectFileUploader } from '@/components/projects/project-file-uploader';
+import { ProjectFileRow } from '@/components/projects/project-file-row';
 import { ProjectAccessTab } from '@/components/projects/project-access';
 import { AttachmentIcon, Avatar, SectionHeader, ServiceIcon, bytes, domain, fieldClass, mutedButton, outlineButton, solidButton } from '@/components/projects/resources';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, ChevronRight, ArrowUpRight, Settings2, Check, Link2, Files, KeyRound, LayoutGrid, Users, Trash2, Pencil, UploadCloud } from 'lucide-react';
+import { Plus, ChevronRight, ArrowUpRight, Settings2, Check, Link2, Files, KeyRound, LayoutGrid, Users, Trash2, Pencil } from 'lucide-react';
 import type { SharedData } from '@/types';
 import type { Task, TaskPriority } from '@/types/task';
 import type { ProjectShowProps, Person, ProjectLink, ProjectFile } from '@/types/project';
@@ -48,8 +50,6 @@ export default function ProjectShow(props: ProjectShowProps) {
     const [memberIds, setMemberIds] = useState<number[]>(project.members.map((user) => user.id));
     const [formBusy, setFormBusy] = useState(false);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-    const [mainUploading, setMainUploading] = useState(false);
-    const fileRef = useRef<HTMLInputElement>(null);
     const taskInputRef = useRef<HTMLInputElement>(null);
     const [linkDialogOpen, setLinkDialogOpen] = useState(false);
     const [editingLink, setEditingLink] = useState<ProjectLink | null>(null);
@@ -97,21 +97,6 @@ export default function ProjectShow(props: ProjectShowProps) {
         router.put(base + '/members', { member_ids: memberIds }, {
             preserveScroll: true, onSuccess: () => setMembersOpen(false),
             onError: setFormErrors, onFinish: () => setFormBusy(false),
-        });
-    };
-    const uploadMain = (files: FileList | null) => {
-        if (!files?.length) return;
-        const arr = Array.from(files);
-        if (arr.length > 10 || arr.some((file) => file.size > 20 * 1024 * 1024)) {
-            window.alert('Maximum 10 files per upload, 20 MB each.');
-            return;
-        }
-        setMainUploading(true);
-        router.post(base + '/files', { files: arr }, {
-            forceFormData: true, preserveScroll: true,
-            onSuccess: () => { if (fileRef.current) fileRef.current.value = ''; },
-            onError: (errors) => window.alert(Object.values(errors)[0] || 'Upload failed'),
-            onFinish: () => setMainUploading(false),
         });
     };
     const deleteProject = () => {
@@ -214,26 +199,21 @@ export default function ProjectShow(props: ProjectShowProps) {
                     </section>
                     <section>
                         <SectionHeader title="Recent files" action={<button className={mutedButton} onClick={() => changeTab('files')}>All files <ArrowUpRight className="size-4" /></button>} />
-                        <div className="space-y-1">{recentFiles.length ? recentFiles.slice(0, 3).map((file) =>
-                            <div key={file.id} className="group flex min-w-0 items-center gap-3 rounded-lg py-2 hover:bg-muted/30">
-                                <AttachmentIcon file={file} />
-                                <a href={base + '/files/' + file.id + '/download'} className="min-w-0 flex-1">
-                                    <span className="block truncate text-xs font-medium">{file.name}</span>
-                                    <span className="mt-1 block text-[10px] text-muted-foreground">{bytes(file.size)} · {file.uploader?.name || 'Unknown'}</span>
-                                </a>
-                                {file.uploader && <Avatar user={file.uploader} className="size-6" />}
-                                {(file.uploaded_by === me || canManage) &&
-                                    <button type="button" className={mutedButton} onClick={() => setEditingFile(file)} title="Rename or manage file" aria-label={'Edit ' + file.name}>
-                                        <Pencil className="size-4" />
-                                    </button>
-                                }
-                            </div>
-                        ) : <p className="py-5 text-xs text-muted-foreground">No uploaded files yet.</p>}</div>
-                        <input ref={fileRef} type="file" className="hidden" multiple onChange={(event) => uploadMain(event.target.files)} />
-                        <button disabled={mainUploading} className="mt-4 flex w-full items-center gap-3 rounded-xl bg-muted/35 px-4 py-4 text-left hover:bg-muted/60 disabled:opacity-50" onClick={() => fileRef.current?.click()}>
-                            <span className="grid size-9 place-items-center rounded-lg bg-background"><UploadCloud className="size-5 text-muted-foreground" /></span>
-                            <span><span className="block text-xs font-medium">{mainUploading ? 'Uploading…' : 'Upload files'}</span><span className="mt-1 block text-[10px] text-muted-foreground">Add documents, images or archives</span></span>
-                        </button>
+                        <div className="space-y-1">
+                            {recentFiles.length
+                                ? recentFiles.map((file) =>
+                                    <ProjectFileRow
+                                        key={file.id}
+                                        projectId={project.id}
+                                        file={file}
+                                        compact
+                                        canEdit={file.uploaded_by === me || canManage}
+                                        onEdit={setEditingFile}
+                                    />
+                                )
+                                : <p className="py-5 text-xs text-muted-foreground">No uploaded files yet.</p>}
+                        </div>
+                        <ProjectFileUploader projectId={project.id} compact />
                     </section>
                     <section>
                         <SectionHeader title="Project team" action={canManage && <button className={mutedButton} onClick={team}>Manage <ArrowUpRight className="size-4" /></button>} />
