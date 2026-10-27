@@ -70,7 +70,7 @@ export function UserAssignment({
             </div>
             <span className="text-sm font-medium">{user.name}</span>
             {!disabled && assignedUsers.length > 1 && (
-                <button
+                <button type="button"
                     onClick={() => onUnassign(user.id)}
                     className="ml-1 rounded-full p-0.5 hover:bg-background/80 transition-colors"
                 >
@@ -85,6 +85,7 @@ export function UserAssignment({
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
                 className="h-9 rounded-full px-3 gap-1.5"

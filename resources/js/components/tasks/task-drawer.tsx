@@ -97,7 +97,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
             Edit task details, description, and due date
           </DrawerDescription>
           <DrawerClose asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8">
               <X className="h-4 w-4" />
             </Button>
           </DrawerClose>

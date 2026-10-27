@@ -20,13 +20,14 @@ class ProjectFileController extends Controller
 
         foreach ($data['files'] as $upload) {
             $name = Str::limit(basename(str_replace('\\', '/', $upload->getClientOriginalName())), 255, '');
-            $path = $upload->store("projects/{$project->id}", 'local');
+            $disk = config('filesystems.default', 'local');
+            $path = $upload->store("projects/{$project->id}", $disk);
 
             try {
                 $project->files()->create([
                     'name' => $name,
                     'path' => $path,
-                    'disk' => 'local',
+                    'disk' => $disk,
                     'mime_type' => $upload->getMimeType(),
                     'extension' => strtolower($upload->getClientOriginalExtension()),
                     'size' => $upload->getSize(),
@@ -34,7 +35,7 @@ class ProjectFileController extends Controller
                     'uploaded_by' => $request->user()->id,
                 ]);
             } catch (\Throwable $e) {
-                Storage::disk('local')->delete($path);
+                Storage::disk($disk)->delete($path);
                 throw $e;
             }
         }

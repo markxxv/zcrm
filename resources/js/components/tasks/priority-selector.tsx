@@ -56,7 +56,7 @@ export function PrioritySelector({ value, onChange, disabled }: PrioritySelector
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
+        <button type="button"
           disabled={disabled}
           className="inline-flex items-center gap-2 text-sm hover:opacity-70 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -78,7 +78,7 @@ export function PrioritySelector({ value, onChange, disabled }: PrioritySelector
       <PopoverContent className="w-48 p-2" align="start">
         <div className="space-y-1">
           {priorities.map((priority) => (
-            <button
+            <button type="button"
               key={priority.value}
               onClick={() => onChange(priority.value)}
               className={cn(
