@@ -430,16 +430,34 @@ export function TaskEditor({ taskId, content, onChange, onUploadingChange, place
         menuHost,
     );
 
-    return <div className="relative overflow-hidden rounded-xl bg-muted/30"
+    return <div ref={rootRef} className="relative rounded-xl bg-muted/30"
         onDragEnterCapture={onDragEnter}
         onDragOverCapture={(event) => {
+            if (event.dataTransfer.types.includes(BLOCK_MIME)) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+                setDropIndex(targetIndexAt(event.clientY));
+                return;
+            }
             if (event.dataTransfer.types.includes('Files')) {
                 event.preventDefault();
                 event.dataTransfer.dropEffect = uploadingRef.current ? 'none' : 'copy';
             }
         }}
         onDragLeaveCapture={onDragLeave}
-        onDropCapture={onDrop}
+        onDropCapture={(event) => {
+            if (event.dataTransfer.types.includes(BLOCK_MIME)) {
+                event.preventDefault();
+                event.stopPropagation();
+                const from = Number(event.dataTransfer.getData(BLOCK_MIME));
+                if (Number.isInteger(from)) moveBlock(editor, from, targetIndexAt(event.clientY));
+                setMovingBlock(false);
+                setDropIndex(null);
+                setHover(null);
+                return;
+            }
+            onDrop(event);
+        }}
         onPasteCapture={onPaste}>
         <input ref={filePicker} type="file" accept="image/jpeg,image/png,image/gif,image/webp"
             multiple className="sr-only" onChange={(event) => {
@@ -448,54 +466,84 @@ export function TaskEditor({ taskId, content, onChange, onUploadingChange, place
                 void uploadFiles(files);
             }} />
 
-        <div className="flex flex-wrap items-center gap-0.5 px-2 py-2">
-            {tool('Bold', <Bold className="size-4" />, () => editor.chain().focus().toggleBold().run(), editor.isActive('bold'))}
-            {tool('Italic', <Italic className="size-4" />, () => editor.chain().focus().toggleItalic().run(), editor.isActive('italic'))}
-            {tool('Underline', <Underline className="size-4" />, () => editor.chain().focus().toggleUnderline().run(), editor.isActive('underline'))}
-            {tool('Strike', <Strikethrough className="size-4" />, () => editor.chain().focus().toggleStrike().run(), editor.isActive('strike'))}
-            {tool('Highlight', <Highlighter className="size-4" />, () => editor.chain().focus().toggleHighlight().run(), editor.isActive('highlight'))}
-            {tool('Code', <Code2 className="size-4" />, () => editor.chain().focus().toggleCode().run(), editor.isActive('code'))}
-            {tool('Link', <Link2 className="size-4" />, withUrl, editor.isActive('link'))}
-            <span className="mx-1 h-4 w-px bg-border/70" />
-            {tool('Heading 1', <Heading1 className="size-4" />, () => editor.chain().focus().toggleHeading({ level: 1 }).run(), editor.isActive('heading', { level: 1 }))}
-            {tool('Heading 2', <Heading2 className="size-4" />, () => editor.chain().focus().toggleHeading({ level: 2 }).run(), editor.isActive('heading', { level: 2 }))}
-            {tool('Heading 3', <Heading3 className="size-4" />, () => editor.chain().focus().toggleHeading({ level: 3 }).run(), editor.isActive('heading', { level: 3 }))}
-            {tool('Bulleted list', <List className="size-4" />, () => editor.chain().focus().toggleBulletList().run(), editor.isActive('bulletList'))}
-            {tool('Numbered list', <ListOrdered className="size-4" />, () => editor.chain().focus().toggleOrderedList().run(), editor.isActive('orderedList'))}
-            {tool('Checklist', <ListTodo className="size-4" />, () => editor.chain().focus().toggleTaskList().run(), editor.isActive('taskList'))}
-            {tool('Quote', <Quote className="size-4" />, () => editor.chain().focus().toggleBlockquote().run(), editor.isActive('blockquote'))}
-            {tool('Table', <Table2 className="size-4" />, () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(), editor.isActive('table'))}
-            {tool('Divider', <Minus className="size-4" />, () => editor.chain().focus().setHorizontalRule().run())}
-            {tool('Add image', <ImagePlus className="size-4" />, () => filePicker.current?.click())}
-            <span className="ml-auto" />
-            {tool('Undo', <Undo2 className="size-4" />, () => editor.chain().focus().undo().run(), false, !editor.can().undo())}
-            {tool('Redo', <Redo2 className="size-4" />, () => editor.chain().focus().redo().run(), false, !editor.can().redo())}
-        </div>
-
-        {editor.isActive('table') && <div className="flex items-center gap-1 px-2 pb-1">
-            {tool('Add row', <Rows3 className="size-4" />, () => editor.chain().focus().addRowAfter().run())}
-            {tool('Add column', <Columns3 className="size-4" />, () => editor.chain().focus().addColumnAfter().run())}
-            {tool('Remove row', <Minus className="size-4" />, () => editor.chain().focus().deleteRow().run())}
-            {tool('Remove column', <Minus className="size-4" />, () => editor.chain().focus().deleteColumn().run())}
-            {tool('Delete table', <Trash2 className="size-4" />, () => editor.chain().focus().deleteTable().run())}
-        </div>}
-
-        <div className="task-rich-editor min-h-48 px-4 pb-4 pt-2"
+        <div className="task-rich-editor relative min-h-48 px-11 pb-4 pt-3"
+            onMouseMove={trackBlock}
+            onMouseLeave={() => { if (!movingBlock) setHover(null); }}
             onClick={(event) => {
                 const target = event.target;
                 if (target instanceof HTMLImageElement && target.closest('.tiptap')) setLightbox(target.src);
             }}>
             <EditorContent editor={editor} />
+
+            {hover && !movingBlock && <div data-task-block-controls
+                className="absolute left-1 z-20 flex items-center gap-0.5 text-muted-foreground"
+                style={{ top: hover.top }}>
+                <button type="button" title="Insert block" aria-label="Insert block"
+                    className="grid size-5 place-items-center rounded hover:bg-muted hover:text-foreground"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => addBlockAfter(hover.index)}>
+                    <Plus className="size-4" strokeWidth={1.7} />
+                </button>
+                <button type="button" draggable title="Drag to reorder block (Alt + ↑/↓)"
+                    aria-label="Drag to reorder block"
+                    className="grid size-5 cursor-grab place-items-center rounded hover:bg-muted hover:text-foreground active:cursor-grabbing"
+                    onMouseDown={(event) => event.stopPropagation()}
+                    onDragStart={(event) => {
+                        event.stopPropagation();
+                        event.dataTransfer.effectAllowed = 'move';
+                        event.dataTransfer.setData(BLOCK_MIME, String(hover.index));
+                        setMovingBlock(true);
+                    }}
+                    onDragEnd={() => { setMovingBlock(false); setDropIndex(null); setHover(null); }}
+                    onKeyDown={(event) => {
+                        if (!event.altKey || !['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+                        event.preventDefault();
+                        const destination = hover.index + (event.key === 'ArrowUp' ? -1 : 2);
+                        moveBlock(editor, hover.index, destination);
+                        const next = Math.max(0, Math.min(editor.state.doc.childCount - 1,
+                            hover.index + (event.key === 'ArrowUp' ? -1 : 1)));
+                        setHover({ index: next, top: hover.top });
+                    }}>
+                    <GripVertical className="size-4" strokeWidth={1.7} />
+                </button>
+            </div>}
+
+            {movingBlock && dropIndex !== null && <div className="pointer-events-none absolute left-10 right-2 z-20 h-0.5 rounded-full bg-blue-500"
+                style={{
+                    top: (dropIndex < editor.state.doc.childCount
+                        ? (editor.view.dom.children[dropIndex]?.getBoundingClientRect().top ?? 0)
+                        : (editor.view.dom.lastElementChild?.getBoundingClientRect().bottom ?? 0))
+                        - (rootRef.current?.getBoundingClientRect().top ?? 0),
+                }} />}
+
+            {editor.isActive('table') && <div className="mt-3 flex w-fit flex-wrap items-center gap-1 rounded-lg bg-zinc-900 p-1 text-white shadow-md">
+                {tool('Add row', <Rows3 className="size-4" />, () => editor.chain().focus().addRowAfter().run())}
+                {tool('Add column', <Columns3 className="size-4" />, () => editor.chain().focus().addColumnAfter().run())}
+                {tool('Remove row', <Minus className="size-4" />, () => editor.chain().focus().deleteRow().run())}
+                {tool('Remove column', <Minus className="size-4" />, () => editor.chain().focus().deleteColumn().run())}
+                {tool('Delete table', <Trash2 className="size-4" />, () => editor.chain().focus().deleteTable().run())}
+            </div>}
         </div>
 
-        {shown.length > 0 && <div className="absolute left-4 top-12 z-30 w-56 max-h-64 overflow-y-auto rounded-lg bg-popover p-1 shadow-lg ring-1 ring-border/60">
-            {shown.map((command) => <button type="button" key={command.label}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => execute(command)}
-                className="block w-full rounded-md px-3 py-2 text-left text-xs hover:bg-muted">
-                {command.label}
-            </button>)}
-        </div>}
+        <BubbleMenu editor={editor} pluginKey="task-description-bubble"
+            options={{ placement: 'top', offset: 8 }}
+            appendTo={() => rootRef.current?.closest<HTMLElement>('[data-vaul-drawer]') ?? document.body}
+            shouldShow={({ state }) => !state.selection.empty && Boolean(
+                state.doc.textBetween(state.selection.from, state.selection.to).trim()
+            )}>
+            <div className="flex max-w-[90vw] items-center gap-0.5 rounded-xl bg-zinc-900 p-1.5 text-white shadow-xl ring-1 ring-white/10">
+                {tool('Bold', <Bold className="size-4" />, () => editor.chain().focus().toggleBold().run(), editor.isActive('bold'))}
+                {tool('Italic', <Italic className="size-4" />, () => editor.chain().focus().toggleItalic().run(), editor.isActive('italic'))}
+                {tool('Underline', <Underline className="size-4" />, () => editor.chain().focus().toggleUnderline().run(), editor.isActive('underline'))}
+                {tool('Strike', <Strikethrough className="size-4" />, () => editor.chain().focus().toggleStrike().run(), editor.isActive('strike'))}
+                <span className="mx-0.5 h-4 w-px bg-zinc-700" />
+                {tool('Link', <Link2 className="size-4" />, withUrl, editor.isActive('link'))}
+                {tool('Highlight', <Highlighter className="size-4" />, () => editor.chain().focus().toggleHighlight().run(), editor.isActive('highlight'))}
+                {tool('Code', <Code2 className="size-4" />, () => editor.chain().focus().toggleCode().run(), editor.isActive('code'))}
+            </div>
+        </BubbleMenu>
+
+        {palette}
 
         {dragging && <div className="pointer-events-none absolute inset-1 z-20 grid place-items-center rounded-lg bg-background/90 ring-2 ring-foreground/50">
             <div className="flex flex-col items-center gap-2 text-sm">
