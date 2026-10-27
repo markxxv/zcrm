@@ -475,7 +475,7 @@ export function TaskEditor({ taskId, content, onChange, onUploadingChange, place
             }}>
             <EditorContent editor={editor} />
 
-            {hover && !movingBlock && <div data-task-block-controls
+            {hover && <div data-task-block-controls
                 className="absolute left-1 z-20 flex items-center gap-0.5 text-muted-foreground"
                 style={{ top: hover.top }}>
                 <button type="button" title="Insert block" aria-label="Insert block"
@@ -513,7 +513,7 @@ export function TaskEditor({ taskId, content, onChange, onUploadingChange, place
                     top: (dropIndex < editor.state.doc.childCount
                         ? (editor.view.dom.children[dropIndex]?.getBoundingClientRect().top ?? 0)
                         : (editor.view.dom.lastElementChild?.getBoundingClientRect().bottom ?? 0))
-                        - (rootRef.current?.getBoundingClientRect().top ?? 0),
+                        - (rootRef.current?.querySelector<HTMLElement>('.task-rich-editor')?.getBoundingClientRect().top ?? 0),
                 }} />}
 
             {editor.isActive('table') && <div className="mt-3 flex w-fit flex-wrap items-center gap-1 rounded-lg bg-zinc-900 p-1 text-white shadow-md">
