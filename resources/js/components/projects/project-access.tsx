@@ -21,6 +21,7 @@ export function ProjectAccessTab({ projectId, page, filters, canAccessVault }: P
     const [active, setActive] = useState<ProjectAccess | null>(null);
     const [form, setForm] = useState<SecretForm>(blank);
     const [busy, setBusy] = useState(false);
+    const [notesLoaded, setNotesLoaded] = useState(true);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [revealing, setRevealing] = useState<ProjectAccess | null>(null);
     const [revealed, setRevealed] = useState<string | null>(null);
@@ -43,13 +44,14 @@ export function ProjectAccessTab({ projectId, page, filters, canAccessVault }: P
     const open = async (access: ProjectAccess | null) => {
         setActive(access);
         setForm(access ? { name: access.name, category: access.category, host: access.host || '', username: access.username || '', secret: '', notes: '' } : blank);
-        setErrors({}); setOpened(true);
+        setErrors({}); setNotesLoaded(!access); setOpened(true);
         if (access) {
             try {
                 const data = await loadSecret(access);
                 setForm((current) => ({ ...current, notes: data.notes || '' }));
+                setNotesLoaded(true);
             } catch {
-                // Metadata is still editable; the secret remains unchanged if blank.
+                setErrors({ notes: 'Cannot load encrypted notes. Reopen this entry before saving.' });
             }
         }
     };
@@ -61,6 +63,7 @@ export function ProjectAccessTab({ projectId, page, filters, canAccessVault }: P
         } catch (error) { setRevealError(error instanceof Error ? error.message : 'Unable to reveal credential'); }
     };
     const save = () => {
+        if (!notesLoaded) { setErrors({ notes: 'Encrypted notes are unavailable. Reopen this entry.' }); return; }
         if (!form.name.trim() || (!active && !form.secret)) { setErrors({ name: 'Name and password are required' }); return; }
         setBusy(true);
         const payload = { ...form, category: form.category as ProjectAccess['category'] };

@@ -22,12 +22,17 @@ jobs:
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: npm ci
       - run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+      - run: |
+          php artisan route:list --path=projects
+          php artisan wayfinder:generate --with-form -vvv
+      - run: |
           find app database/migrations routes tests -name '*.php' -print0 | xargs -0 -n1 php -l
           npm run types
           npm run build
       - run: |
-          cp .env.example .env
-          php artisan key:generate
           php artisan test --compact
         env:
           DB_CONNECTION: sqlite
