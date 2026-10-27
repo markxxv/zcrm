@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ChunkUploader } from '@/components/files/chunk-uploader';
 import {
     Check, ExternalLink, File, FileArchive, FileImage, FileText, Globe2,
     Link2, LoaderCircle, Paperclip, Pencil, Plus, Presentation, Table2,
@@ -97,7 +98,6 @@ export function TaskAttachments({ taskId, onFilesChanged }: { taskId: number; on
     const [editedTitle, setEditedTitle] = useState('');
     const [editedUrl, setEditedUrl] = useState('');
     const [renamedFile, setRenamedFile] = useState('');
-    const uploadInput = useRef<HTMLInputElement>(null);
     const currentTask = useRef(taskId);
     currentTask.current = taskId;
 
@@ -146,22 +146,6 @@ export function TaskAttachments({ taskId, onFilesChanged }: { taskId: number; on
         }
     };
 
-    const upload = (list: FileList | null) => {
-        const selected = Array.from(list || []);
-        if (!selected.length || busy) return;
-        if (selected.length > 10 || selected.some((file) => file.size > 20 * 1024 * 1024)) {
-            setError('Maximum 10 files, 20 MB per file.');
-            return;
-        }
-        const body = new FormData();
-        selected.forEach((file) => body.append('files[]', file));
-
-        void run(async () => {
-            await jsonRequest(base + '/files', 'POST', body);
-            if (uploadInput.current) uploadInput.current.value = '';
-        }, true);
-    };
-
     const addLink = () => {
         if (!linkUrl.trim() || !linkTitle.trim()) {
             setError('Enter a link name and URL.');
@@ -208,13 +192,9 @@ export function TaskAttachments({ taskId, onFilesChanged }: { taskId: number; on
                     <Paperclip className="size-3.5 text-muted-foreground" />
                     Files <span className="font-normal text-muted-foreground">{files.length || ''}</span>
                 </span>
-                <button type="button" disabled={busy} onClick={() => uploadInput.current?.click()}
-                    className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground">
-                    <Plus className="size-3.5" /> Attach
-                </button>
+                <ChunkUploader key={taskId} scope="task" targetId={taskId} mode="inline"
+                    onUploaded={() => { void refresh().then(() => onFilesChanged?.()); }} />
             </div>
-            <input ref={uploadInput} type="file" multiple className="hidden"
-                onChange={(event) => upload(event.currentTarget.files)} />
             {files.length > 0 && <div className="space-y-0.5">
                 {files.map((file) => <div key={file.id} className="group flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1.5 hover:bg-muted/40">
                     <FileIcon extension={file.extension} />
