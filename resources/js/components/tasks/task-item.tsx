@@ -44,10 +44,6 @@ export function TaskItem({ task, onToggleComplete, onOpenDrawer, onMoveToTomorro
         >
           {task.is_completed ? (
             <Check className="w-4 h-4" />
-          ) : task.assigned_users && task.assigned_users.length > 0 ? (
-            <span className="text-[10px] font-medium">
-              {task.assigned_users[0].name.charAt(0).toUpperCase()}
-            </span>
           ) : (
             <Circle className="w-4 h-4" />
           )}
