@@ -60,6 +60,7 @@ class FileThumbnail
 
         $storage = Storage::disk($file->disk);
         abort_unless($storage->exists($file->path), 404);
+        abort_unless($storage->size($file->path) <= self::MAX_SOURCE_BYTES, 404);
 
         $content = $storage->get($file->path);
         $info = @getimagesizefromstring($content);
