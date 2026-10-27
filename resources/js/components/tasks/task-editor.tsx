@@ -85,7 +85,7 @@ export function TaskEditor({ content, onChange, placeholder = 'Type / for comman
     >
       <YooptaEditor
         editor={editor}
-        plugins={PLUGINS}
+        plugins={PLUGINS as unknown as React.ComponentProps<typeof YooptaEditor>['plugins']}
         marks={MARKS}
         tools={TOOLS}
         value={parsedValue}

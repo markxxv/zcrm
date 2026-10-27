@@ -26,7 +26,7 @@ export function ProjectFiles({ projectId, page, filters, userId, ownerId }: Prop
         setUploadProgress(0); setErrors({});
         router.post(fileUrl, { files: arr }, {
             forceFormData: true, preserveScroll: true,
-            onProgress: (progress) => setUploadProgress(progress.percentage ?? 0),
+            onProgress: (progress) => setUploadProgress(progress?.percentage ?? 0),
             onError: (e) => setErrors(e),
             onFinish: () => { setUploadProgress(null); if (uploadRef.current) uploadRef.current.value = ''; },
         });

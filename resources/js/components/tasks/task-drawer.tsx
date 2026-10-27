@@ -69,7 +69,6 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
     if (!confirm('Are you sure you want to delete this task?')) return;
 
     destroy('/tasks', {
-      data: { task_id: task.id },
       preserveScroll: true,
       onSuccess: () => {
         onOpenChange(false);
