@@ -1,20 +1,22 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Link2 } from 'lucide-react';
 import type { ProjectLink } from '@/types/project';
+import { ProjectResponsiveDialog } from './project-responsive-dialog';
 import { ProjectLinkForm } from './project-link-form';
 
 type Props = {
     projectId: number;
     open: boolean;
     link: ProjectLink | null;
+    suggestions?: string[];
     onOpenChange: (open: boolean) => void;
 };
 
-/** Full editor in the Links tab; same fields and validation as Main. */
-export function ProjectLinkDialog({ projectId, open, link, onOpenChange }: Props) {
-    return <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-            <DialogHeader><DialogTitle>{link ? 'Edit link' : 'Add link'}</DialogTitle></DialogHeader>
-            {open && <ProjectLinkForm projectId={projectId} link={link} onClose={() => onOpenChange(false)} />}
-        </DialogContent>
-    </Dialog>;
+/** Shared editor for Main and Links: dialog on desktop, bottom drawer on mobile. */
+export function ProjectLinkDialog({ projectId, open, link, suggestions = [], onOpenChange }: Props) {
+    return <ProjectResponsiveDialog open={open} onOpenChange={onOpenChange} icon={Link2}
+        title={link ? 'Edit link' : 'Add link'}
+        description="Organize project links and pinned documents">
+        {open && <ProjectLinkForm projectId={projectId} link={link}
+            suggestions={suggestions} onClose={() => onOpenChange(false)} />}
+    </ProjectResponsiveDialog>;
 }

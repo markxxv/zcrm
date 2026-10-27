@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type KeyboardEvent } from 'react';
 import { router } from '@inertiajs/react';
-import { AlignLeft, ChevronDown, ChevronUp, Link2, Pin, Tag, Trash2, Type } from 'lucide-react';
+import { AlignLeft, ChevronDown, ChevronUp, Link2, Pin, Trash2, Type } from 'lucide-react';
 import type { ProjectLink } from '@/types/project';
-import { mutedButton, outlineButton, solidButton } from './resources';
+import { outlineButton, solidButton } from './resources';
+import { ProjectFormField, projectFieldInput } from './project-form-field';
+import { ProjectChipsInput } from './project-chips-input';
 
 type FormState = {
     title: string;
@@ -16,13 +18,11 @@ type Props = {
     projectId: number;
     link?: ProjectLink | null;
     compact?: boolean;
+    suggestions?: string[];
     onClose: () => void;
 };
 
 const blank: FormState = { title: '', url: '', category: '', notes: '', pinned: true };
-const field = 'w-full min-w-0 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground/65';
-const inputWrap = 'flex items-center gap-2.5 rounded-lg bg-muted/50 px-3 py-2.5 focus-within:bg-muted/80';
-const iconClass = 'size-4 shrink-0 text-muted-foreground/75';
 
 function initialState(link?: ProjectLink | null): FormState {
     return link ? {
@@ -34,16 +34,20 @@ function initialState(link?: ProjectLink | null): FormState {
     } : blank;
 }
 
-/** Shared link editor: Main's compact popover/drawer and Links' full dialog. */
-export function ProjectLinkForm({ projectId, link, compact = false, onClose }: Props) {
+/** Reused by the Main popover, mobile drawer and the full Links editor. */
+export function ProjectLinkForm({ projectId, link, compact = false, suggestions = [], onClose }: Props) {
     const [data, setData] = useState<FormState>(() => initialState(link));
+    const [categoryDraft, setCategoryDraft] = useState('');
     const [expanded, setExpanded] = useState(!compact);
     const [saving, setSaving] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
         setData(initialState(link));
+        setCategoryDraft('');
         setExpanded(!compact);
+        setConfirmDelete(false);
         setErrors({});
     }, [link, compact, projectId]);
 
@@ -59,17 +63,20 @@ export function ProjectLinkForm({ projectId, link, compact = false, onClose }: P
 
     const submit = () => {
         if (saving) return;
+        const category = categoryDraft.trim() || data.category.trim();
         const nextErrors: Record<string, string> = {};
-        if (!data.title.trim()) nextErrors.title = 'Enter a name for the link.';
+        if (!data.title.trim()) nextErrors.title = 'Enter a name for this link.';
         if (!data.url.trim()) nextErrors.url = 'Enter the URL.';
         else {
             try {
                 const parsed = new URL(data.url.trim());
-                if (!['https:', 'http:'].includes(parsed.protocol)) nextErrors.url = 'Use an HTTP or HTTPS URL.';
-            } catch { nextErrors.url = 'Enter a valid URL, including https://.'; }
+                if (!['http:', 'https:'].includes(parsed.protocol)) nextErrors.url = 'Use an HTTP or HTTPS URL.';
+            } catch { nextErrors.url = 'Enter a valid URL starting with https://.'; }
         }
+        if (category.length > 80) nextErrors.category = 'Maximum 80 characters.';
         if (Object.keys(nextErrors).length) {
             setErrors(nextErrors);
+            if (nextErrors.category) setExpanded(true);
             return;
         }
 
@@ -77,14 +84,13 @@ export function ProjectLinkForm({ projectId, link, compact = false, onClose }: P
         const payload = {
             title: data.title.trim(),
             url: data.url.trim(),
-            category: data.category.trim(),
+            category,
             notes: data.notes.trim(),
             pinned: data.pinned,
         };
-
         const options = {
             preserveScroll: true,
-            onSuccess: () => onClose(),
+            onSuccess: onClose,
             onError: (issues: Record<string, string>) => {
                 setErrors(issues);
                 if (issues.category || issues.notes) setExpanded(true);
@@ -96,85 +102,90 @@ export function ProjectLinkForm({ projectId, link, compact = false, onClose }: P
         else router.post(base, payload, options);
     };
 
-    const remove = () => {
-        if (!link || saving || !window.confirm('Delete this link?')) return;
+    const destroy = () => {
+        if (!link || saving) return;
         setSaving(true);
         router.delete('/projects/' + projectId + '/links/' + link.id, {
             preserveScroll: true,
             onSuccess: onClose,
+            onError: (issues) => setErrors(issues),
             onFinish: () => setSaving(false),
         });
     };
 
-    const enterToSave = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    const enterToSave = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') {
             event.preventDefault();
             submit();
         }
     };
 
-    return <div className="space-y-2.5">
-        <label className={inputWrap}>
-            <Type className={iconClass} aria-hidden />
-            <span className="sr-only">Link name</span>
-            <input autoFocus autoComplete="off" className={field} placeholder="Name" value={data.title}
-                maxLength={255} disabled={saving} onChange={(e) => set('title', e.target.value)}
-                onKeyDown={enterToSave} aria-invalid={Boolean(errors.title)} />
-        </label>
-        {errors.title && <p role="alert" className="pl-1 text-[11px] text-red-500">{errors.title}</p>}
+    return <div className="space-y-3">
+        <ProjectFormField id="project-link-title" title="Name" icon={Type} error={errors.title}>
+            <input id="project-link-title" autoFocus autoComplete="off" className={projectFieldInput}
+                placeholder="Link name" maxLength={255} value={data.title} disabled={saving}
+                onChange={(e) => set('title', e.target.value)} onKeyDown={enterToSave} />
+        </ProjectFormField>
 
-        <label className={inputWrap}>
-            <Link2 className={iconClass} aria-hidden />
-            <span className="sr-only">Link URL</span>
-            <input type="url" inputMode="url" autoComplete="url" className={field}
-                placeholder="https://docs.google.com/..." value={data.url}
-                disabled={saving} onChange={(e) => set('url', e.target.value)} onKeyDown={enterToSave}
-                aria-invalid={Boolean(errors.url)} />
-        </label>
-        {errors.url && <p role="alert" className="pl-1 text-[11px] text-red-500">{errors.url}</p>}
+        <ProjectFormField id="project-link-url" title="URL" icon={Link2} error={errors.url}>
+            <input id="project-link-url" type="url" inputMode="url" autoComplete="url"
+                className={projectFieldInput} placeholder="https://docs.google.com/..."
+                value={data.url} disabled={saving} onChange={(e) => set('url', e.target.value)}
+                onKeyDown={enterToSave} />
+        </ProjectFormField>
 
         {compact && <button type="button" onClick={() => setExpanded(!expanded)}
-            aria-expanded={expanded}
-            className="flex items-center gap-1.5 px-1 py-1 text-[11px] text-muted-foreground hover:text-foreground">
+            aria-expanded={expanded} className="flex items-center gap-1.5 px-1 py-1 text-[11px] text-muted-foreground hover:text-foreground">
             {expanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
             {expanded ? 'Fewer options' : 'Category & notes'}
         </button>}
 
-        {expanded && <div className="space-y-2.5">
-            <label className={inputWrap}>
-                <Tag className={iconClass} aria-hidden />
-                <span className="sr-only">Category</span>
-                <input className={field} maxLength={80} placeholder="Category · optional"
-                    disabled={saving} value={data.category} onChange={(e) => set('category', e.target.value)}
-                    onKeyDown={enterToSave} />
-            </label>
-            {errors.category && <p role="alert" className="pl-1 text-[11px] text-red-500">{errors.category}</p>}
-            <label className={inputWrap + ' items-start'}>
-                <AlignLeft className={iconClass + ' mt-0.5'} aria-hidden />
-                <span className="sr-only">Notes</span>
-                <textarea className={field + ' min-h-12 resize-y'} rows={2} maxLength={4000}
-                    placeholder="Notes · optional" value={data.notes}
-                    disabled={saving} onChange={(e) => set('notes', e.target.value)} />
-            </label>
-            {errors.notes && <p role="alert" className="pl-1 text-[11px] text-red-500">{errors.notes}</p>}
+        {expanded && <div className="space-y-3">
+            <ProjectChipsInput id="project-link-category" label="Category · optional"
+                multiple={false} maxLength={80}
+                values={data.category ? [data.category] : []}
+                onChange={(values) => set('category', values[0] || '')}
+                draft={categoryDraft} onDraftChange={setCategoryDraft}
+                suggestions={suggestions} placeholder="Choose or create category"
+                disabled={saving} error={errors.category} />
+
+            <ProjectFormField id="project-link-notes" title="Notes · optional" icon={AlignLeft}
+                multiline error={errors.notes}>
+                <textarea id="project-link-notes" rows={2} maxLength={4000}
+                    className={projectFieldInput + ' min-h-14 resize-y'}
+                    placeholder="Any helpful context…" value={data.notes} disabled={saving}
+                    onChange={(e) => set('notes', e.target.value)} />
+            </ProjectFormField>
         </div>}
 
-        <div className="flex items-center justify-between gap-3 px-1 py-1">
-            <label className="flex cursor-pointer items-center gap-2 text-[11px] text-muted-foreground">
-                <input type="checkbox" className="size-3.5 accent-foreground" checked={data.pinned}
-                    disabled={saving} onChange={(e) => set('pinned', e.target.checked)} />
-                <Pin className="size-3.5" aria-hidden />
-                Pin to Main
+        <div className="flex items-center justify-between gap-2 px-1 py-1">
+            <label className="inline-flex cursor-pointer items-center gap-2 text-[11px] text-muted-foreground">
+                <input type="checkbox" className="size-3.5 accent-foreground"
+                    checked={data.pinned} disabled={saving}
+                    onChange={(e) => set('pinned', e.target.checked)} />
+                <Pin className="size-3.5" aria-hidden /> Pin to Main
             </label>
-            <span className="text-[10px] text-muted-foreground/70">Google links detected automatically</span>
         </div>
 
         {errors.general && <p role="alert" className="text-[11px] text-red-500">{errors.general}</p>}
-        <div className="flex items-center justify-end gap-2 pt-1">
-            {link && <button type="button" disabled={saving} onClick={remove}
-                className={mutedButton + ' mr-auto text-red-500'}><Trash2 className="size-4" /> Delete</button>}
+        {confirmDelete && link && <div className="space-y-2 rounded-lg bg-red-500/5 px-3 py-3">
+            <p className="text-xs font-medium text-red-500">Delete this link permanently?</p>
+            <div className="flex justify-end gap-2">
+                <button type="button" disabled={saving} className={outlineButton} onClick={() => setConfirmDelete(false)}>Keep link</button>
+                <button type="button" disabled={saving} onClick={destroy}
+                    className="rounded-lg bg-red-600 px-3 py-2 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50">
+                    {saving ? 'Deleting…' : 'Delete permanently'}
+                </button>
+            </div>
+        </div>}
+        <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+            {link && !confirmDelete && <button type="button" disabled={saving}
+                onClick={() => setConfirmDelete(true)}
+                className="mr-auto inline-flex items-center gap-1.5 px-2 py-2 text-xs text-red-500 hover:text-red-600">
+                <Trash2 className="size-3.5" /> Delete
+            </button>}
             <button type="button" disabled={saving} className={outlineButton} onClick={onClose}>Cancel</button>
-            <button type="button" disabled={saving} className={solidButton} onClick={submit}>
+            <button type="button" disabled={saving || confirmDelete} className={solidButton} onClick={submit}>
                 {saving ? 'Saving…' : link ? 'Save changes' : 'Add link'}
             </button>
         </div>
