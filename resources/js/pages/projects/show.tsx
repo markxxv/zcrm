@@ -8,6 +8,7 @@ import { ProjectLinks } from '@/components/projects/project-links';
 import { ProjectLinkDialog } from '@/components/projects/project-link-dialog';
 import { ProjectQuickLink } from '@/components/projects/project-quick-link';
 import { ProjectFileDialog } from '@/components/projects/project-file-dialog';
+import { ProjectFileDeleteDialog } from '@/components/projects/project-file-delete-dialog';
 import { ProjectFileUploader } from '@/components/projects/project-file-uploader';
 import { ProjectFileRow } from '@/components/projects/project-file-row';
 import { ProjectAccessTab } from '@/components/projects/project-access';
@@ -55,6 +56,7 @@ export default function ProjectShow(props: ProjectShowProps) {
     const [linkDialogOpen, setLinkDialogOpen] = useState(false);
     const [editingLink, setEditingLink] = useState<ProjectLink | null>(null);
     const [editingFile, setEditingFile] = useState<ProjectFile | null>(null);
+    const [deletingFile, setDeletingFile] = useState<ProjectFile | null>(null);
     const base = '/projects/' + project.id;
 
     const openTasks = tasks.filter((task) => !task.is_completed);
@@ -210,6 +212,7 @@ export default function ProjectShow(props: ProjectShowProps) {
                                         compact
                                         canEdit={file.can_edit}
                                         onEdit={setEditingFile}
+                                        onDelete={setDeletingFile}
                                     />
                                 )
                                 : <p className="py-5 text-xs text-muted-foreground">No uploaded files yet.</p>}
@@ -234,7 +237,8 @@ export default function ProjectShow(props: ProjectShowProps) {
             onFilesChanged={() => router.reload({ only: ['recentFiles', 'files', 'counts'] })} />
 
         <ProjectLinkDialog projectId={project.id} open={linkDialogOpen} link={editingLink} onOpenChange={setLinkDialogOpen} />
-        <ProjectFileDialog projectId={project.id} file={editingFile} onOpenChange={(open) => { if (!open) setEditingFile(null); }} />
+        <ProjectFileDialog projectId={project.id} file={editingFile} onOpenChange={(open) => { if (!open) setEditingFile(null); }} onDelete={(file) => { setEditingFile(null); setDeletingFile(file); }} />
+        <ProjectFileDeleteDialog projectId={project.id} file={deletingFile} onClose={() => setDeletingFile(null)} />
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
             <DialogContent>
                 <DialogHeader><DialogTitle>Project settings</DialogTitle></DialogHeader>

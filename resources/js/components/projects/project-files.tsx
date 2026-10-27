@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
-import { FileUp, Grid2X2, List, Download, Pencil } from 'lucide-react';
+import { FileUp, Grid2X2, List, Download, Pencil, Trash2 } from 'lucide-react';
 import { ProjectFileDialog } from './project-file-dialog';
+import { ProjectFileDeleteDialog } from './project-file-delete-dialog';
 import { ProjectFileRow } from './project-file-row';
 import { ProjectFileUploader, type ProjectFileUploaderHandle } from './project-file-uploader';
 import { UserAvatar } from '@/components/user-avatar';
@@ -12,6 +13,7 @@ export function ProjectFiles({ projectId, page, filters }: Props) {
     const { query, setQuery, setFilter } = useResourceFilters(projectId, filters);
     const [grid, setGrid] = useState(false);
     const [selected, setSelected] = useState<ProjectFile | null>(null);
+    const [deleting, setDeleting] = useState<ProjectFile | null>(null);
     const uploadRef = useRef<ProjectFileUploaderHandle>(null);
 
     const edit = (file: ProjectFile) => setSelected(file);
@@ -32,13 +34,20 @@ export function ProjectFiles({ projectId, page, filters }: Props) {
                 <p className="truncate text-xs font-medium" title={file.name}>{file.name}</p>
                 <p className="mt-1 truncate text-[10px] text-muted-foreground" title={file.task_title || 'Project file'}>{file.task_title ? 'Task: ' + file.task_title : 'Project file'}</p>
                 <div className="mt-2 flex items-center gap-1.5 text-[10px] text-muted-foreground">{file.uploader && <UserAvatar user={file.uploader} className="size-5" />}{bytes(file.size)} · {displayDate(file.created_at)}</div>
-                <div className="mt-3 flex justify-between"><a href={download(file)} className={mutedButton}><Download className="size-4" /></a>{canEdit(file) && <button className={mutedButton} onClick={() => edit(file)} aria-label="Edit file"><Pencil className="size-4" /></button>}</div>
+                <div className="mt-3 flex items-center justify-between gap-1">
+                    <a href={download(file)} className={mutedButton} aria-label={'Download ' + file.name}><Download className="size-4" /></a>
+                    {canEdit(file) && <div className="flex items-center gap-1">
+                        <button type="button" className={mutedButton} onClick={() => edit(file)} aria-label={'Edit ' + file.name}><Pencil className="size-4" /></button>
+                        <button type="button" className={mutedButton + ' hover:text-red-500'} onClick={() => setDeleting(file)} aria-label={'Delete ' + file.name}><Trash2 className="size-4" /></button>
+                    </div>}
+                </div>
             </div>)}
         </div> : <div className="divide-y divide-border/40">
             {page?.data.map((file) => <ProjectFileRow key={file.id} projectId={projectId} file={file}
-                canEdit={canEdit(file)} onEdit={edit} />)}
+                canEdit={canEdit(file)} onEdit={edit} onDelete={setDeleting} />)}
         </div> : <div className="py-24 text-center text-xs text-muted-foreground">No matching files.</div>}
         <Paginator page={page} />
-        <ProjectFileDialog projectId={projectId} file={selected} onOpenChange={(open) => { if (!open) setSelected(null); }} />
+        <ProjectFileDialog projectId={projectId} file={selected} onOpenChange={(open) => { if (!open) setSelected(null); }} onDelete={(file) => { setSelected(null); setDeleting(file); }} />
+        <ProjectFileDeleteDialog projectId={projectId} file={deleting} onClose={() => setDeleting(null)} />
     </>;
 }

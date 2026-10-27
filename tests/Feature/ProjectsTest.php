@@ -247,6 +247,42 @@ class ProjectsTest extends TestCase
                 ->etc());
     }
 
+    public function test_project_file_delete_requires_permission_and_removes_file_from_both_views(): void
+    {
+        Storage::fake('local');
+        $owner = User::factory()->create();
+        $outsider = User::factory()->create();
+        $project = $this->project($owner);
+
+        $file = $project->files()->create([
+            'name' => 'obsolete-brief.pdf',
+            'path' => 'projects/'.$project->id.'/obsolete-brief.pdf',
+            'disk' => 'local',
+            'size' => 512,
+            'extension' => 'pdf',
+            'uploaded_by' => $owner->id,
+        ]);
+        Storage::disk('local')->put($file->path, 'old content');
+
+        $url = '/projects/'.$project->id.'/files/'.$file->id;
+        $this->actingAs($outsider)->delete($url)->assertForbidden();
+        Storage::disk('local')->assertExists($file->path);
+
+        $this->actingAs($owner)->delete($url)->assertRedirect();
+        Storage::disk('local')->assertMissing($file->path);
+        $this->assertDatabaseMissing('project_files', ['id' => $file->id]);
+
+        $this->actingAs($owner)->get('/projects/'.$project->id)
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->where('counts.files', 0)
+                ->has('recentFiles', 0)
+                ->etc());
+        $this->actingAs($owner)->get('/projects/'.$project->id.'?tab=files')
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->has('files.data', 0)
+                ->etc());
+    }
+
     public function test_project_member_can_download_shared_task_file_but_cannot_edit_without_task_permission(): void
     {
         Storage::fake('local');

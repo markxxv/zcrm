@@ -1,4 +1,4 @@
-import { Download, Pencil } from 'lucide-react';
+import { Download, Pencil, Trash2 } from 'lucide-react';
 import { UserAvatar } from '@/components/user-avatar';
 import type { ProjectFile } from '@/types/project';
 import { AttachmentIcon, bytes, displayDate, mutedButton, fileDownloadUrl } from './resources';
@@ -8,10 +8,11 @@ type Props = {
     file: ProjectFile;
     canEdit: boolean;
     onEdit: (file: ProjectFile) => void;
+    onDelete: (file: ProjectFile) => void;
     compact?: boolean;
 };
 
-export function ProjectFileRow({ projectId, file, canEdit, onEdit, compact = false }: Props) {
+export function ProjectFileRow({ projectId, file, canEdit, onEdit, onDelete, compact = false }: Props) {
     const controlClass = compact
         ? 'grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground sm:size-7'
         : mutedButton;
@@ -41,11 +42,19 @@ export function ProjectFileRow({ projectId, file, canEdit, onEdit, compact = fal
                 className={controlClass} title="Download" aria-label={'Download ' + file.name}>
                 <Download className={compact ? 'size-3.5' : 'size-4'} />
             </a>
-            {canEdit && <button type="button" className={controlClass}
-                onClick={() => onEdit(file)} title="Rename, tag or delete"
-                aria-label={'Manage ' + file.name}>
-                <Pencil className={compact ? 'size-3.5' : 'size-4'} />
-            </button>}
+            {canEdit && <>
+                <button type="button" className={controlClass}
+                    onClick={() => onEdit(file)} title="Rename or manage file"
+                    aria-label={'Edit ' + file.name}>
+                    <Pencil className={compact ? 'size-3.5' : 'size-4'} />
+                </button>
+                <button type="button"
+                    className={controlClass + ' hover:text-red-500'}
+                    onClick={() => onDelete(file)}
+                    title="Delete file" aria-label={'Delete ' + file.name}>
+                    <Trash2 className={compact ? 'size-3.5' : 'size-4'} />
+                </button>
+            </>}
         </div>
     </div>;
 }
