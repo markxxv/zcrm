@@ -25,6 +25,7 @@ jobs:
           cp .env.example .env
           php artisan key:generate
           touch database/database.sqlite
+          mkdir -p storage/framework/views storage/framework/cache/data storage/framework/sessions storage/framework/testing storage/logs storage/app/private
       - run: |
           php artisan route:list --path=projects
           php artisan wayfinder:generate --with-form -vvv
