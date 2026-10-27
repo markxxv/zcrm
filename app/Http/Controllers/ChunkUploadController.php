@@ -231,11 +231,15 @@ class ChunkUploadController extends Controller
             }
             abort_unless(
                 $upload->status === 'assembling' && $upload->assembled_chunks === $upload->total_chunks,
-                409, 'Complete the file assembly first.'
+                409, 'Complete the file assembly first: '.$upload->status.', '.$upload->assembled_chunks.'/'.$upload->total_chunks
             );
 
             $src = $upload->assembledPath();
-            abort_unless($local->exists($src) && $local->size($src) === $upload->size, 409, 'Assembled file is incomplete.');
+            abort_unless(
+                $local->exists($src) && $local->size($src) === $upload->size,
+                409,
+                'Assembled file is incomplete: expected '.$upload->size.' bytes, found '.($local->exists($src) ? $local->size($src) : 'missing')
+            );
 
             $extension = strtolower(pathinfo($upload->name, PATHINFO_EXTENSION));
             $extension = preg_match('/^[a-z0-9]{1,20}$/', $extension) ? $extension : '';

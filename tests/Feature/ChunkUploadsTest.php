@@ -105,8 +105,9 @@ class ChunkUploadsTest extends TestCase
             ->assertJsonPath('status', 'ready')
             ->assertJsonPath('assembled_chunks', $state['total_chunks']);
 
-        $result = $this->postJson('/uploads/'.$id.'/complete')
-            ->assertOk()->assertJsonPath('file.name', 'large-video.mp4');
+        $result = $this->postJson('/uploads/'.$id.'/complete');
+        $this->assertSame(200, $result->getStatusCode(), $result->getContent());
+        $result->assertJsonPath('file.name', 'large-video.mp4');
 
         $file = ProjectFile::findOrFail($result->json('file.id'));
         $this->assertSame($size, $file->size);
@@ -118,7 +119,7 @@ class ChunkUploadsTest extends TestCase
         $this->postJson('/uploads/'.$id.'/complete')
             ->assertOk()->assertJsonPath('file.id', $file->id);
         $this->assertDatabaseCount('project_files', 1);
-        Storage::disk('local')->assertDirectoryMissing('chunk-uploads/'.$id);
+        $this->assertFalse(Storage::disk('local')->directoryExists('chunk-uploads/'.$id);
     }
 
     public function test_task_attachments_use_exactly_the_same_chunk_protocol(): void
@@ -137,8 +138,9 @@ class ChunkUploadsTest extends TestCase
         }
         $this->postJson('/uploads/'.$id.'/assemble')
             ->assertJsonPath('status', 'ready');
-        $this->postJson('/uploads/'.$id.'/complete')
-            ->assertJsonPath('file.name', 'task-file.bin');
+        $result = $this->postJson('/uploads/'.$id.'/complete');
+        $this->assertSame(200, $result->getStatusCode(), $result->getContent());
+        $result->assertJsonPath('file.name', 'task-file.bin');
 
         $file = TaskFile::firstOrFail();
         $this->assertSame($task->id, $file->task_id);
@@ -214,7 +216,7 @@ class ChunkUploadsTest extends TestCase
         $this->part($first['id'], 0, 'c');
         $this->deleteJson('/uploads/'.$first['id'])->assertNoContent();
         $this->assertDatabaseMissing('chunk_uploads', ['id' => $first['id']]);
-        Storage::disk('local')->assertDirectoryMissing('chunk-uploads/'.$first['id']);
+        $this->assertFalse(Storage::disk('local')->directoryExists('chunk-uploads/'.$first['id']);
 
         $second = $this->startUpload('project', $project->id, 'expired.dat', 1, 'd');
         $this->part($second['id'], 0, 'd');
@@ -222,7 +224,7 @@ class ChunkUploadsTest extends TestCase
         $this->getJson('/uploads/'.$second['id'])->assertStatus(410);
         Artisan::call('uploads:prune');
         $this->assertDatabaseMissing('chunk_uploads', ['id' => $second['id']]);
-        Storage::disk('local')->assertDirectoryMissing('chunk-uploads/'.$second['id']);
+        $this->assertFalse(Storage::disk('local')->directoryExists('chunk-uploads/'.$second['id']);
         $this->assertDatabaseCount('project_files', 0);
     }
 
