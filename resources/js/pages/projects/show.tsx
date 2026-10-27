@@ -6,6 +6,7 @@ import { TaskInput } from '@/components/tasks/task-input';
 import { ProjectFiles } from '@/components/projects/project-files';
 import { ProjectLinks } from '@/components/projects/project-links';
 import { ProjectLinkDialog } from '@/components/projects/project-link-dialog';
+import { ProjectQuickLink } from '@/components/projects/project-quick-link';
 import { ProjectFileDialog } from '@/components/projects/project-file-dialog';
 import { ProjectFileUploader } from '@/components/projects/project-file-uploader';
 import { ProjectFileRow } from '@/components/projects/project-file-row';
@@ -195,7 +196,7 @@ export default function ProjectShow(props: ProjectShowProps) {
                                 </button>
                             </div>
                         ) : <p className="py-5 text-xs text-muted-foreground">No pinned links yet.</p>}</div>
-                        <button className={mutedButton + ' mt-3'} onClick={() => editLink(null)}><Plus className="size-4" /> Add link</button>
+                        <ProjectQuickLink projectId={project.id} />
                     </section>
                     <section>
                         <SectionHeader title="Recent files" action={<button className={mutedButton} onClick={() => changeTab('files')}>All files <ArrowUpRight className="size-4" /></button>} />
