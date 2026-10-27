@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\TaskFile;
 use App\Models\User;
+use App\Support\ProjectFileLibrary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -75,38 +76,21 @@ class ProjectController extends Controller
         $type = (string) $request->query('type', 'all');
         $sort = (string) $request->query('sort', 'newest');
 
-        $fileQuery = $project->files()->with('uploader:id,name,avatar_path');
+        $filePage = null;
         if ($tab === 'files') {
-            if ($q !== '') {
-                $fileQuery->where(function ($query) use ($q) {
-                    $query->where('name', 'like', "%{$q}%")
-                        ->orWhere('extension', 'like', "%{$q}%")
-                        ->orWhere('mime_type', 'like', "%{$q}%")
-                        ->orWhere('tags', 'like', "%{$q}%")
-                        ->orWhereHas('uploader', fn ($users) => $users->where('name', 'like', "%{$q}%"));
-                });
-            }
-            if ($type !== 'all' && in_array($type, ['pdf', 'image', 'document', 'archive', 'other'], true)) {
-                $groups = [
-                    'pdf' => ['pdf'],
-                    'image' => ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'svg'],
-                    'document' => ['txt', 'md', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'ppt', 'pptx'],
-                    'archive' => ['zip', 'rar', '7z', 'tar', 'gz'],
-                ];
-                if ($type === 'other') {
-                    $fileQuery->whereNotIn('extension', array_merge(...array_values($groups)));
-                } else {
-                    $fileQuery->whereIn('extension', $groups[$type]);
-                }
-            }
+            $filePage = ProjectFileLibrary::filtered($project, $q, $type, $sort)
+                ->paginate(20)->withQueryString();
+
+            $filePage->setCollection(
+                ProjectFileLibrary::present($filePage->getCollection(), $project, $request->user())
+            );
         }
-        match ($sort) {
-            'name' => $fileQuery->orderBy('name'),
-            'oldest' => $fileQuery->oldest(),
-            'size' => $fileQuery->orderByDesc('size'),
-            default => $fileQuery->latest(),
-        };
-        $fileQuery->orderByDesc('id');
+
+        $recentFiles = ProjectFileLibrary::present(
+            ProjectFileLibrary::filtered($project, '', 'all', 'newest')->limit(5)->get(),
+            $project,
+            $request->user()
+        );
 
         $linkQuery = $project->links();
         if ($tab === 'links') {
@@ -142,8 +126,8 @@ class ProjectController extends Controller
             ],
             'tasks' => $tasks,
             'pinnedLinks' => $project->links()->where('pinned', true)->latest()->limit(6)->get(),
-            'recentFiles' => $project->files()->with('uploader:id,name,avatar_path')->latest()->limit(5)->get(),
-            'files' => $tab === 'files' ? $fileQuery->paginate(20)->withQueryString() : null,
+            'recentFiles' => $recentFiles,
+            'files' => $filePage,
             'links' => $tab === 'links' ? (match ($sort) {
                     'name' => $linkQuery->orderBy('title'),
                     'oldest' => $linkQuery->oldest(),
@@ -151,7 +135,7 @@ class ProjectController extends Controller
                 })->paginate(25)->withQueryString() : null,
             'accesses' => $canAccess && $tab === 'access'
                 ? $accessQuery->latest()->paginate(25)->withQueryString() : null,
-            'counts' => ['files' => $project->files()->count(), 'links' => $project->links()->count()],
+            'counts' => ['files' => ProjectFileLibrary::query($project)->count(), 'links' => $project->links()->count()],
             'availableUsers' => User::query()->orderBy('name')->get(['id', 'name', 'email', 'avatar_path']),
             'availableProjects' => Project::query()
                 ->whereHas('members', fn ($query) => $query->whereKey($request->user()->id))
