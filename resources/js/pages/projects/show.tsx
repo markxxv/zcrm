@@ -221,6 +221,7 @@ export default function ProjectShow(props: ProjectShowProps) {
                                     <span className="block truncate text-xs font-medium">{file.name}</span>
                                     <span className="mt-1 block text-[10px] text-muted-foreground">{bytes(file.size)} · {file.uploader?.name || 'Unknown'}</span>
                                 </a>
+                                {file.uploader && <Avatar user={file.uploader} className="size-6" />}
                                 {(file.uploaded_by === me || canManage) &&
                                     <button type="button" className={mutedButton} onClick={() => setEditingFile(file)} title="Rename or manage file" aria-label={'Edit ' + file.name}>
                                         <Pencil className="size-4" />
