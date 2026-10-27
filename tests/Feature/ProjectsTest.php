@@ -128,6 +128,8 @@ class ProjectsTest extends TestCase
             'tags' => ['brand'],
             'uploaded_by' => $owner->id,
         ]);
+        // Make the newest-first assertion independent of timestamp resolution.
+        $direct->forceFill(['created_at' => now()->subDay()])->save();
 
         $task = Task::create([
             'title' => 'Prepare visual assets',
