@@ -7,6 +7,7 @@ use App\Http\Controllers\ProjectFileController;
 use App\Http\Controllers\ProjectLinkController;
 use App\Http\Controllers\ProjectTaskFileController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TaskEditorImageController;
 use App\Http\Controllers\TaskAttachmentController;
 use App\Http\Controllers\TaskFileController;
 use App\Http\Controllers\TaskLinkController;
@@ -34,6 +35,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/tasks/{task}/attachments', [TaskAttachmentController::class, 'index'])->name('tasks.attachments.index');
     Route::post('/tasks/{task}/files', [TaskFileController::class, 'store'])->name('tasks.files.store');
+    Route::post('/tasks/{task}/files/{file}/editor-image', [TaskEditorImageController::class, 'convert'])->name('tasks.editor-images.convert');
+    Route::get('/tasks/{task}/files/{file}/image', [TaskEditorImageController::class, 'show'])->name('tasks.editor-images.show');
     Route::patch('/tasks/{task}/files/{file}', [TaskFileController::class, 'update'])->name('tasks.files.update');
     Route::get('/tasks/{task}/files/{file}/download', [TaskFileController::class, 'download'])->name('tasks.files.download');
     Route::get('/tasks/{task}/files/{file}/thumbnail', [TaskFileController::class, 'thumbnail'])->name('tasks.files.thumbnail');
