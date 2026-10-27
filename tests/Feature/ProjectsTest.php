@@ -45,6 +45,22 @@ class ProjectsTest extends TestCase
         $this->assertTrue($project->members()->whereKey($owner->id)->exists());
     }
 
+    public function test_quick_project_creation_needs_only_a_name_and_uses_active_defaults(): void
+    {
+        $owner = User::factory()->create();
+
+        $this->actingAs($owner)->post('/projects', [
+            'name' => 'Quick project',
+        ])->assertRedirect();
+
+        $project = Project::firstOrFail();
+        $this->assertSame('Quick project', $project->name);
+        $this->assertSame('active', $project->status);
+        $this->assertNull($project->description);
+        $this->assertSame($owner->id, $project->created_by);
+        $this->assertTrue($project->members()->whereKey($owner->id)->exists());
+    }
+
     public function test_project_index_includes_uploaded_file_storage_in_bytes(): void
     {
         $user = User::factory()->create();
