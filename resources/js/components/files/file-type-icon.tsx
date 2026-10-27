@@ -1,5 +1,5 @@
 import { File, FileImage } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
 
 type Props = {
     name: string;
@@ -8,31 +8,20 @@ type Props = {
     thumbnailUrl?: string;
 };
 
-type MaterialIcon = { name: string; svg: string };
-type IconData = { key: string; src: string };
+type FileIconComponent = ComponentType<{
+    size?: number;
+    variant?: 'filled' | 'outlined' | 'colored';
+    className?: string;
+}>;
+type ResolvedIcon = { key: string; icon: FileIconComponent | null };
 
 const rasterExtensions = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
 const imageExtensions = new Set([
     ...rasterExtensions, 'heic', 'heif', 'bmp', 'tif', 'tiff', 'svg', 'ico',
 ]);
 
-// Keep the 377-icon library out of the initial JS bundle.
-let iconLibrary: Promise<typeof import('material-file-icons')> | undefined;
-const iconUrls = new Map<string, string>();
-
-function materialIcon(filename: string): Promise<string> {
-    iconLibrary ??= import('material-file-icons');
-    return iconLibrary.then(({ getIcon }) => {
-        const icon: MaterialIcon = getIcon(filename);
-        let url = iconUrls.get(icon.name);
-        if (!url) {
-            // Render the trusted library SVG as an <img>, without inline SVG/HTML.
-            url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(icon.svg);
-            iconUrls.set(icon.name, url);
-        }
-        return url;
-    });
-}
+// Avoid loading the file icon library on screens with no file attachments.
+let iconLibrary: Promise<typeof import('@nice2dev/icons-filetypes')> | undefined;
 
 function fileExtension(name: string, extension?: string | null): string {
     const provided = extension?.trim().replace(/^\./, '').toLowerCase();
@@ -41,35 +30,42 @@ function fileExtension(name: string, extension?: string | null): string {
     return basename.includes('.') ? basename.split('.').pop() || '' : '';
 }
 
-/** One shared icon for Projects, Recent files and Tasks; images retain private WebP previews. */
+async function getFileIcon(extension: string): Promise<FileIconComponent | null> {
+    iconLibrary ??= import('@nice2dev/icons-filetypes');
+    const library = await iconLibrary;
+    const name = library.FILE_TYPE_ICONS[extension as keyof typeof library.FILE_TYPE_ICONS];
+    if (!name) return null;
+    const component = (library as unknown as Record<string, FileIconComponent | undefined>)[name];
+    return component || null;
+}
+
+/** Shared format icons for Projects, Recent files and Tasks; raster images retain private WebP thumbnails. */
 export function FileTypeIcon({ name, extension, size = 'normal', thumbnailUrl }: Props) {
     const [failedUrl, setFailedUrl] = useState<string | null>(null);
-    const [material, setMaterial] = useState<IconData | null>(null);
+    const [resolved, setResolved] = useState<ResolvedIcon | null>(null);
 
     const ext = fileExtension(name, extension);
     const isImage = imageExtensions.has(ext);
-    const key = name.toLowerCase();
-    const filename = name.includes('.') || !ext ? name : name + '.' + ext;
     const preview = rasterExtensions.has(ext) && thumbnailUrl && failedUrl !== thumbnailUrl
         ? thumbnailUrl : null;
 
     useEffect(() => {
-        if (isImage) return;
+        if (isImage || !ext) return;
         let active = true;
-        materialIcon(filename).then((src) => {
-            if (active) setMaterial({ key, src });
+        getFileIcon(ext).then((icon) => {
+            if (active) setResolved({ key: ext, icon });
         }).catch(() => {
-            if (active) setMaterial(null);
+            if (active) setResolved({ key: ext, icon: null });
         });
         return () => { active = false; };
-    }, [filename, key, isImage]);
+    }, [ext, isImage]);
 
     const inline = size === 'inline';
     const grid = size === 'grid';
     const compact = size === 'compact';
     const outerSize = grid ? 'size-10 rounded-lg' : inline ? 'size-5 rounded' :
         compact ? 'size-8 rounded-md' : 'size-10 rounded-lg';
-    const innerSize = inline ? 'size-4' : compact ? 'size-6' : grid ? 'size-8' : 'size-7';
+    const iconSize = inline ? 20 : compact ? 30 : grid ? 36 : 38;
 
     if (preview) {
         return <span className={'block shrink-0 overflow-hidden rounded-md bg-muted ' +
@@ -80,15 +76,13 @@ export function FileTypeIcon({ name, extension, size = 'normal', thumbnailUrl }:
         </span>;
     }
 
-    const materialSrc = !isImage && material?.key === key ? material.src : null;
-    const FallbackIcon = isImage ? FileImage : File;
+    const Icon = !isImage && resolved?.key === ext ? resolved.icon : null;
+    const Fallback = isImage ? FileImage : File;
 
     return <span aria-hidden="true" title={ext ? ext.toUpperCase() + ' file' : 'File'}
-        className={'grid shrink-0 place-items-center ' + outerSize +
-            (isImage ? ' bg-sky-500/10 text-sky-600 dark:text-sky-400' : '')}>
-        {materialSrc
-            ? <img src={materialSrc} alt="" width={32} height={32}
-                loading="lazy" decoding="async" draggable={false} className={innerSize + ' object-contain'} />
-            : <FallbackIcon className={innerSize + ' text-muted-foreground'} strokeWidth={1.7} />}
+        className={'grid shrink-0 place-items-center ' + outerSize}>
+        {Icon
+            ? <Icon size={iconSize} variant="colored" />
+            : <Fallback className={(inline ? 'size-4' : compact ? 'size-5' : 'size-6') + ' text-muted-foreground'} strokeWidth={1.7} />}
     </span>;
 }
