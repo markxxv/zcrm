@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -20,6 +23,18 @@ jobs:
           node-version: '22'
           cache: npm
       - run: composer install --no-interaction --prefer-dist --no-progress
+      # Synchronize the npm lockfile after replacing the editor dependencies.
+      - run: npm install --package-lock-only --ignore-scripts
+      - name: Commit updated npm lockfile
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          if ! git diff --quiet -- package-lock.json; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add package-lock.json
+            git commit -m "chore: synchronize Tiptap lockfile"
+            git push
+          fi
       - run: npm ci
       - run: |
           cp .env.example .env
