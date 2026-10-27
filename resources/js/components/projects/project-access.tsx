@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
-import { Database, Eye, EyeOff, Globe2, HardDrive, KeyRound, Pencil, Plus, ShieldCheck, Trash2, Copy } from 'lucide-react';
+import { AlignLeft, ChevronDown, Copy, Database, Eye, EyeOff, Globe2, HardDrive, KeyRound, Layers3, Pencil, Plus, Server, ShieldCheck, Trash2, UserRound } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { Filters, Page, ProjectAccess } from '@/types/project';
-import { SectionHeader, Paginator, ResourceSearch, FilterSelect, fieldClass, mutedButton, outlineButton, solidButton, useResourceFilters } from './resources';
+import { SectionHeader, Paginator, ResourceSearch, FilterSelect, mutedButton, outlineButton, solidButton, useResourceFilters } from './resources';
+import { ProjectFormField, projectFieldInput } from './project-form-field';
+import { ProjectResponsiveDialog } from './project-responsive-dialog';
 
 type Props = { projectId: number; page: Page<ProjectAccess> | null; filters: Filters; canAccessVault: boolean };
 type SecretForm = { name: string; category: string; host: string; username: string; secret: string; notes: string };
@@ -23,6 +25,8 @@ export function ProjectAccessTab({ projectId, page, filters, canAccessVault }: P
     const [busy, setBusy] = useState(false);
     const [notesLoaded, setNotesLoaded] = useState(true);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [showSecret, setShowSecret] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
     const [revealing, setRevealing] = useState<ProjectAccess | null>(null);
     const [revealed, setRevealed] = useState<string | null>(null);
     const [revealNotes, setRevealNotes] = useState<string | null>(null);
@@ -31,6 +35,19 @@ export function ProjectAccessTab({ projectId, page, filters, canAccessVault }: P
     const base = '/projects/' + projectId + '/access';
 
     useEffect(() => { setOpened(false); setRevealing(null); setRevealed(null); }, [projectId]);
+    const closeEditor = () => {
+        setOpened(false); setActive(null); setForm(blank); setErrors({});
+        setShowSecret(false); setConfirmDelete(false);
+    };
+    const changeField = (key: keyof SecretForm, value: string) => {
+        setForm((current) => ({ ...current, [key]: value }));
+        setErrors((current) => {
+            if (!current[key]) return current;
+            const next = { ...current };
+            delete next[key];
+            return next;
+        });
+    };
     function hideReveal() { setRevealing(null); setRevealed(null); setRevealNotes(null); setVisible(false); setRevealError(''); }
 
     async function loadSecret(access: ProjectAccess): Promise<{ secret: string; notes: string | null }> {
@@ -44,7 +61,7 @@ export function ProjectAccessTab({ projectId, page, filters, canAccessVault }: P
     const open = async (access: ProjectAccess | null) => {
         setActive(access);
         setForm(access ? { name: access.name, category: access.category, host: access.host || '', username: access.username || '', secret: '', notes: '' } : blank);
-        setErrors({}); setNotesLoaded(!access); setOpened(true);
+        setErrors({}); setNotesLoaded(!access); setShowSecret(false); setConfirmDelete(false); setOpened(true);
         if (access) {
             try {
                 const data = await loadSecret(access);
@@ -64,16 +81,30 @@ export function ProjectAccessTab({ projectId, page, filters, canAccessVault }: P
     };
     const save = () => {
         if (!notesLoaded) { setErrors({ notes: 'Encrypted notes are unavailable. Reopen this entry.' }); return; }
-        if (!form.name.trim() || (!active && !form.secret)) { setErrors({ name: 'Name and password are required' }); return; }
+        const nextErrors: Record<string, string> = {};
+        if (!form.name.trim()) nextErrors.name = 'Enter a service name.';
+        if (!active && !form.secret.trim()) nextErrors.secret = 'Enter a password or API key.';
+        if (Object.keys(nextErrors).length) { setErrors(nextErrors); return; }
         setBusy(true);
         const payload = { ...form, category: form.category as ProjectAccess['category'] };
-        const options = { preserveScroll: true, onSuccess: () => { setOpened(false); setForm(blank); }, onError: (e: Record<string, string>) => setErrors(e), onFinish: () => setBusy(false) };
+        const options = {
+            preserveScroll: true,
+            onSuccess: closeEditor,
+            onError: (issues: Record<string, string>) => setErrors(issues),
+            onFinish: () => setBusy(false),
+        };
         if (active) router.patch(base + '/' + active.id, payload, options);
         else router.post(base, payload, options);
     };
     const remove = () => {
-        if (!active || !window.confirm('Permanently delete these credentials?')) return;
-        router.delete(base + '/' + active.id, { preserveScroll: true, onSuccess: () => { setOpened(false); setForm(blank); } });
+        if (!active || busy) return;
+        setBusy(true);
+        router.delete(base + '/' + active.id, {
+            preserveScroll: true,
+            onSuccess: closeEditor,
+            onError: (issues) => setErrors(issues),
+            onFinish: () => setBusy(false),
+        });
     };
 
     if (!canAccessVault) return <>
@@ -103,25 +134,86 @@ export function ProjectAccessTab({ projectId, page, filters, canAccessVault }: P
             </div>)}
         </div> : <div className="py-24 text-center text-xs text-muted-foreground">No credentials found.</div>}
         <Paginator page={page} />
-        <Dialog open={opened} onOpenChange={(next) => { if (!next) { setOpened(false); setForm(blank); } }}>
-            <DialogContent className="max-h-[90vh] overflow-y-auto">
-                <DialogHeader><DialogTitle>{active ? 'Edit access' : 'Add access'}</DialogTitle></DialogHeader>
-                <div className="grid gap-4">
-                    <label className="grid gap-2 text-xs">Service name<input className={fieldClass} autoComplete="off" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
-                    <label className="grid gap-2 text-xs">Type<select className={fieldClass} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>{categories.map((category) => <option key={category}>{category}</option>)}</select></label>
-                    <label className="grid gap-2 text-xs">Host / URL<input className={fieldClass} value={form.host} onChange={(e) => setForm({ ...form, host: e.target.value })} autoComplete="off" /></label>
-                    <label className="grid gap-2 text-xs">Username<input className={fieldClass} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} autoComplete="off" /></label>
-                    <label className="grid gap-2 text-xs">{active ? 'New password (leave blank to keep existing)' : 'Password / API key'}<input className={fieldClass} type="password" value={form.secret} onChange={(e) => setForm({ ...form, secret: e.target.value })} autoComplete="new-password" /></label>
-                    <label className="grid gap-2 text-xs">Private notes<textarea className={fieldClass + ' min-h-20 resize-y'} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
-                    {Object.values(errors).length > 0 && <p role="alert" className="text-xs text-red-600">{Object.values(errors)[0]}</p>}
-                    <div className="flex items-center justify-end gap-2">
-                        {active && <button className={mutedButton + ' mr-auto text-red-600'} onClick={remove}><Trash2 className="size-4" /> Delete</button>}
-                        <button className={outlineButton} onClick={() => { setOpened(false); setForm(blank); }}>Cancel</button>
-                        <button className={solidButton} disabled={busy} onClick={save}>{busy ? 'Saving…' : 'Save access'}</button>
-                    </div>
+        <ProjectResponsiveDialog open={opened} onOpenChange={(next) => { if (!next) closeEditor(); }}
+            title={active ? 'Edit access' : 'Add access'}
+            description="Encrypted credentials · Project owner only"
+            icon={ShieldCheck} disabled={busy}>
+            <div className="space-y-3">
+                <ProjectFormField id="access-name" title="Service name" icon={Server} error={errors.name}>
+                    <input id="access-name" autoFocus autoComplete="off" maxLength={150} disabled={busy}
+                        className={projectFieldInput} placeholder="Hosting, database, service…"
+                        value={form.name} onChange={(e) => changeField('name', e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } }} />
+                </ProjectFormField>
+
+                <ProjectFormField id="access-category" title="Type" icon={Layers3} error={errors.category}>
+                    <select id="access-category" className={projectFieldInput + ' cursor-pointer appearance-none'}
+                        disabled={busy} value={form.category} onChange={(e) => changeField('category', e.target.value)}>
+                        {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+                    </select>
+                    <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                </ProjectFormField>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <ProjectFormField id="access-host" title="Host / URL · optional" icon={Globe2} error={errors.host}>
+                        <input id="access-host" autoComplete="off" maxLength={255} disabled={busy}
+                            className={projectFieldInput} placeholder="server.example.com"
+                            value={form.host} onChange={(e) => changeField('host', e.target.value)} />
+                    </ProjectFormField>
+                    <ProjectFormField id="access-username" title="Username · optional" icon={UserRound} error={errors.username}>
+                        <input id="access-username" autoComplete="off" maxLength={255} disabled={busy}
+                            className={projectFieldInput} placeholder="root / admin"
+                            value={form.username} onChange={(e) => changeField('username', e.target.value)} />
+                    </ProjectFormField>
                 </div>
-            </DialogContent>
-        </Dialog>
+
+                <ProjectFormField id="access-secret" title={active ? 'New password · leave blank to keep existing' : 'Password / API key'} icon={KeyRound}
+                    error={errors.secret}>
+                    <input id="access-secret" type={showSecret ? 'text' : 'password'} autoComplete="new-password"
+                        maxLength={10000} disabled={busy} className={projectFieldInput}
+                        placeholder={active ? 'Keep current secret' : 'Enter password or API key'}
+                        value={form.secret} onChange={(e) => changeField('secret', e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } }} />
+                    <button type="button" disabled={busy} aria-label={showSecret ? 'Hide password' : 'Show password'}
+                        aria-pressed={showSecret} className="shrink-0 text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowSecret((value) => !value)}>
+                        {showSecret ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                </ProjectFormField>
+
+                <ProjectFormField id="access-notes" title="Private notes · optional" icon={AlignLeft}
+                    error={errors.notes} multiline>
+                    <textarea id="access-notes" rows={2} maxLength={10000} disabled={busy || !notesLoaded}
+                        className={projectFieldInput + ' min-h-14 resize-y'}
+                        placeholder={notesLoaded ? 'Additional private details…' : 'Loading encrypted notes…'}
+                        value={form.notes} onChange={(e) => changeField('notes', e.target.value)} />
+                </ProjectFormField>
+
+                {errors.general && <p role="alert" className="text-[11px] text-red-500">{errors.general}</p>}
+                {confirmDelete && active && <div className="space-y-2 rounded-lg bg-red-500/5 px-3 py-3">
+                    <p className="text-xs font-medium text-red-500">Delete these credentials permanently?</p>
+                    <p className="text-[11px] text-muted-foreground">The saved password and private notes will be removed.</p>
+                    <div className="flex justify-end gap-2">
+                        <button type="button" disabled={busy} className={outlineButton} onClick={() => setConfirmDelete(false)}>Keep access</button>
+                        <button type="button" disabled={busy} onClick={remove}
+                            className="rounded-lg bg-red-600 px-3 py-2 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50">
+                            {busy ? 'Deleting…' : 'Delete permanently'}
+                        </button>
+                    </div>
+                </div>}
+
+                <div className="flex flex-wrap items-center justify-end gap-2 pt-3">
+                    {active && !confirmDelete && <button type="button" disabled={busy} className="mr-auto inline-flex items-center gap-1.5 px-2 py-2 text-xs text-red-500 hover:text-red-600"
+                        onClick={() => setConfirmDelete(true)}>
+                        <Trash2 className="size-3.5" /> Delete
+                    </button>}
+                    <button type="button" disabled={busy} className={outlineButton} onClick={closeEditor}>Cancel</button>
+                    <button type="button" disabled={busy || !notesLoaded || confirmDelete} className={solidButton} onClick={save}>
+                        {busy ? 'Saving…' : active ? 'Save changes' : 'Add access'}
+                    </button>
+                </div>
+            </div>
+        </ProjectResponsiveDialog>
         <Dialog open={!!revealing} onOpenChange={(next) => { if (!next) hideReveal(); }}>
             <DialogContent>
                 <DialogHeader><DialogTitle>Credential · {revealing?.name}</DialogTitle></DialogHeader>
