@@ -1,12 +1,13 @@
 import { useRef, useState } from 'react';
-import { FileUp, Grid2X2, List, Download, Pencil, Trash2 } from 'lucide-react';
+import { FileUp, Grid2X2, List } from 'lucide-react';
 import { ProjectFileDialog } from './project-file-dialog';
 import { ProjectFileDeleteDialog } from './project-file-delete-dialog';
 import { ProjectFileRow } from './project-file-row';
+import { ProjectFileActions } from './project-file-actions';
 import { ProjectFileUploader, type ProjectFileUploaderHandle } from './project-file-uploader';
 import { UserAvatar } from '@/components/user-avatar';
 import type { Filters, Page, ProjectFile } from '@/types/project';
-import { AttachmentIcon, SectionHeader, Paginator, ResourceSearch, FilterSelect, mutedButton, outlineButton, solidButton, bytes, displayDate, useResourceFilters, fileDownloadUrl } from './resources';
+import { AttachmentIcon, SectionHeader, Paginator, ResourceSearch, FilterSelect, solidButton, bytes, displayDate, useResourceFilters, fileDownloadUrl } from './resources';
 
 type Props = { projectId: number; page: Page<ProjectFile> | null; filters: Filters; suggestions: string[] };
 export function ProjectFiles({ projectId, page, filters, suggestions }: Props) {
@@ -34,12 +35,9 @@ export function ProjectFiles({ projectId, page, filters, suggestions }: Props) {
                 <p className="truncate text-xs font-medium" title={file.name}>{file.name}</p>
                 <p className="mt-1 truncate text-[10px] text-muted-foreground" title={file.task_title || 'Project file'}>{file.task_title ? 'Task: ' + file.task_title : 'Project file'}</p>
                 <div className="mt-2 flex items-center gap-1.5 text-[10px] text-muted-foreground">{file.uploader && <UserAvatar user={file.uploader} className="size-5" />}{bytes(file.size)} · {displayDate(file.created_at)}</div>
-                <div className="mt-3 flex items-center justify-between gap-1">
-                    <a href={download(file)} className={mutedButton} aria-label={'Download ' + file.name}><Download className="size-4" /></a>
-                    {canEdit(file) && <div className="flex items-center gap-1">
-                        <button type="button" className={mutedButton} onClick={() => edit(file)} aria-label={'Edit ' + file.name}><Pencil className="size-4" /></button>
-                        <button type="button" className={mutedButton + ' hover:text-red-500'} onClick={() => setDeleting(file)} aria-label={'Delete ' + file.name}><Trash2 className="size-4" /></button>
-                    </div>}
+                <div className="mt-2 flex justify-end">
+                    <ProjectFileActions projectId={projectId} file={file}
+                        canEdit={canEdit(file)} onEdit={edit} onDelete={setDeleting} />
                 </div>
             </div>)}
         </div> : <div className="divide-y divide-border/40">
