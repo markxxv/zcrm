@@ -57,16 +57,16 @@ class ProjectController extends Controller
             $tab = 'main';
         }
 
-        $project->load(['members:id,name,email']);
+        $project->load(['members:id,name,email,avatar_path']);
         $tasks = $project->tasks()
-            ->with(['assignedUsers:id,name,email', 'projects:id,name'])
+            ->with(['assignedUsers:id,name,email,avatar_path', 'projects:id,name'])
             ->orderBy('is_completed')->orderBy('due_date')->get();
 
         $q = mb_substr(trim((string) $request->query('q', '')), 0, 150);
         $type = (string) $request->query('type', 'all');
         $sort = (string) $request->query('sort', 'newest');
 
-        $fileQuery = $project->files()->with('uploader:id,name');
+        $fileQuery = $project->files()->with('uploader:id,name,avatar_path');
         if ($tab === 'files') {
             if ($q !== '') {
                 $fileQuery->where(function ($query) use ($q) {
@@ -133,7 +133,7 @@ class ProjectController extends Controller
             ],
             'tasks' => $tasks,
             'pinnedLinks' => $project->links()->where('pinned', true)->latest()->limit(6)->get(),
-            'recentFiles' => $project->files()->with('uploader:id,name')->latest()->limit(5)->get(),
+            'recentFiles' => $project->files()->with('uploader:id,name,avatar_path')->latest()->limit(5)->get(),
             'files' => $tab === 'files' ? $fileQuery->paginate(20)->withQueryString() : null,
             'links' => $tab === 'links' ? (match ($sort) {
                     'name' => $linkQuery->orderBy('title'),
@@ -143,7 +143,7 @@ class ProjectController extends Controller
             'accesses' => $canAccess && $tab === 'access'
                 ? $accessQuery->latest()->paginate(25)->withQueryString() : null,
             'counts' => ['files' => $project->files()->count(), 'links' => $project->links()->count()],
-            'availableUsers' => User::query()->orderBy('name')->get(['id', 'name', 'email']),
+            'availableUsers' => User::query()->orderBy('name')->get(['id', 'name', 'email', 'avatar_path']),
             'availableProjects' => Project::query()
                 ->whereHas('members', fn ($query) => $query->whereKey($request->user()->id))
                 ->orderBy('name')->get(['id', 'name']),

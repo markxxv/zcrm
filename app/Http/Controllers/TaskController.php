@@ -88,7 +88,7 @@ class TaskController extends Controller
 
         $date = $request->date('date')?->toDateString() ?? today()->toDateString();
         $tasks = Task::query()
-            ->with(['assignedUsers:id,name,email', 'projects:id,name'])
+            ->with(['assignedUsers:id,name,email,avatar_path', 'projects:id,name'])
             ->whereHas('assignedUsers', fn ($q) => $q->whereKey($request->user()->id))
             ->where(fn ($q) => $q
                 ->whereDate('due_date', $date)
@@ -100,7 +100,7 @@ class TaskController extends Controller
         return Inertia::render('tasks/index', [
             'tasks' => $tasks,
             'selectedDate' => $date,
-            'availableUsers' => User::orderBy('name')->get(['id', 'name', 'email']),
+            'availableUsers' => User::orderBy('name')->get(['id', 'name', 'email', 'avatar_path']),
             'availableProjects' => Project::query()
                 ->whereHas('members', fn ($q) => $q->whereKey($request->user()->id))
                 ->orderBy('name')->get(['id', 'name']),
