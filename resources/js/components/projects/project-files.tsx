@@ -5,19 +5,18 @@ import { ProjectFileRow } from './project-file-row';
 import { ProjectFileUploader, type ProjectFileUploaderHandle } from './project-file-uploader';
 import { UserAvatar } from '@/components/user-avatar';
 import type { Filters, Page, ProjectFile } from '@/types/project';
-import { AttachmentIcon, SectionHeader, Paginator, ResourceSearch, FilterSelect, mutedButton, outlineButton, solidButton, bytes, displayDate, useResourceFilters } from './resources';
+import { AttachmentIcon, SectionHeader, Paginator, ResourceSearch, FilterSelect, mutedButton, outlineButton, solidButton, bytes, displayDate, useResourceFilters, fileDownloadUrl } from './resources';
 
-type Props = { projectId: number; page: Page<ProjectFile> | null; filters: Filters; userId: number; ownerId: number };
-export function ProjectFiles({ projectId, page, filters, userId, ownerId }: Props) {
+type Props = { projectId: number; page: Page<ProjectFile> | null; filters: Filters };
+export function ProjectFiles({ projectId, page, filters }: Props) {
     const { query, setQuery, setFilter } = useResourceFilters(projectId, filters);
     const [grid, setGrid] = useState(false);
     const [selected, setSelected] = useState<ProjectFile | null>(null);
     const uploadRef = useRef<ProjectFileUploaderHandle>(null);
-    const fileUrl = '/projects/' + projectId + '/files';
 
     const edit = (file: ProjectFile) => setSelected(file);
-    const download = (file: ProjectFile) => fileUrl + '/' + file.id + '/download';
-    const canEdit = (file: ProjectFile) => ownerId === userId || file.uploaded_by === userId;
+    const download = (file: ProjectFile) => fileDownloadUrl(projectId, file);
+    const canEdit = (file: ProjectFile) => file.can_edit;
     return <>
         <SectionHeader title="Project files" subtitle="Private documents and attachments" action={<button className={solidButton} onClick={() => uploadRef.current?.browse()}><FileUp className="size-4" /> Upload files</button>} />
         <ProjectFileUploader ref={uploadRef} projectId={projectId} />
@@ -30,7 +29,9 @@ export function ProjectFiles({ projectId, page, filters, userId, ownerId }: Prop
         {(page?.data || []).length ? grid ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {page?.data.map((file) => <div key={file.id} className="min-w-0 rounded-xl bg-muted/30 p-3">
                 <a href={download(file)} className="mb-3 grid h-28 place-items-center rounded-lg bg-muted/60"><AttachmentIcon file={file} /></a>
-                <p className="truncate text-xs font-medium" title={file.name}>{file.name}</p><div className="mt-2 flex items-center gap-1.5 text-[10px] text-muted-foreground">{file.uploader && <UserAvatar user={file.uploader} className="size-5" />}{bytes(file.size)} · {displayDate(file.created_at)}</div>
+                <p className="truncate text-xs font-medium" title={file.name}>{file.name}</p>
+                <p className="mt-1 truncate text-[10px] text-muted-foreground" title={file.task_title || 'Project file'}>{file.task_title ? 'Task: ' + file.task_title : 'Project file'}</p>
+                <div className="mt-2 flex items-center gap-1.5 text-[10px] text-muted-foreground">{file.uploader && <UserAvatar user={file.uploader} className="size-5" />}{bytes(file.size)} · {displayDate(file.created_at)}</div>
                 <div className="mt-3 flex justify-between"><a href={download(file)} className={mutedButton}><Download className="size-4" /></a>{canEdit(file) && <button className={mutedButton} onClick={() => edit(file)} aria-label="Edit file"><Pencil className="size-4" /></button>}</div>
             </div>)}
         </div> : <div className="divide-y divide-border/40">

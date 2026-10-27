@@ -207,7 +207,7 @@ export default function ProjectShow(props: ProjectShowProps) {
                                         projectId={project.id}
                                         file={file}
                                         compact
-                                        canEdit={file.uploaded_by === me || canManage}
+                                        canEdit={file.can_edit}
                                         onEdit={setEditingFile}
                                     />
                                 )
@@ -223,7 +223,7 @@ export default function ProjectShow(props: ProjectShowProps) {
                 </aside>
             </div>}
 
-            {filters.tab === 'files' && <ProjectFiles projectId={project.id} page={props.files} filters={filters} userId={me} ownerId={project.created_by} />}
+            {filters.tab === 'files' && <ProjectFiles projectId={project.id} page={props.files} filters={filters} />}
             {filters.tab === 'links' && <ProjectLinks projectId={project.id} page={props.links} filters={filters} />}
             {filters.tab === 'access' && <ProjectAccessTab projectId={project.id} page={props.accesses} filters={filters} canAccessVault={canAccessVault} />}
         </div>

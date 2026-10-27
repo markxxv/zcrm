@@ -16,7 +16,9 @@ export interface ProjectLink {
 export interface ProjectFile {
     id: number; name: string; mime_type: string | null; extension: string | null;
     size: number; tags: string[] | null; uploaded_by: number;
-    created_at: string; uploader: Person;
+    created_at: string; uploader: Person | null;
+    source: 'project' | 'task'; task_id: number | null; task_title: string | null;
+    can_edit: boolean;
 }
 export interface ProjectAccess {
     id: number; name: string; category: 'Hosting' | 'Database' | 'DNS' | 'Other';

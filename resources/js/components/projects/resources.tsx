@@ -92,3 +92,17 @@ export function FilterSelect({ value, onChange, options }: { value: string; onCh
         <ChevronDown className="pointer-events-none absolute right-2.5 top-3 size-3 text-muted-foreground" />
     </div>;
 }
+
+export function fileDownloadUrl(projectId: number, file: ProjectFile): string {
+    const base = '/projects/' + projectId;
+    return file.source === 'task'
+        ? base + '/task-files/' + file.id + '/download'
+        : base + '/files/' + file.id + '/download';
+}
+
+export function fileActionUrl(projectId: number, file: ProjectFile): string {
+    const base = '/projects/' + projectId;
+    return file.source === 'task'
+        ? base + '/task-files/' + file.id
+        : base + '/files/' + file.id;
+}
