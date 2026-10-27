@@ -4,6 +4,7 @@ use App\Http\Controllers\ProjectAccessController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectFileController;
 use App\Http\Controllers\ProjectLinkController;
+use App\Http\Controllers\ProjectTaskFileController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskAttachmentController;
 use App\Http\Controllers\TaskFileController;
@@ -45,6 +46,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/projects/{project}/files/{file}', [ProjectFileController::class, 'update'])->name('projects.files.update');
     Route::get('/projects/{project}/files/{file}/download', [ProjectFileController::class, 'download'])->name('projects.files.download');
     Route::delete('/projects/{project}/files/{file}', [ProjectFileController::class, 'destroy'])->name('projects.files.destroy');
+
+    Route::get('/projects/{project}/task-files/{file}/download', [ProjectTaskFileController::class, 'download'])->name('projects.task-files.download');
+    Route::patch('/projects/{project}/task-files/{file}', [ProjectTaskFileController::class, 'update'])->name('projects.task-files.update');
+    Route::delete('/projects/{project}/task-files/{file}', [ProjectTaskFileController::class, 'destroy'])->name('projects.task-files.destroy');
 
     Route::post('/projects/{project}/access', [ProjectAccessController::class, 'store'])->name('projects.access.store');
     Route::patch('/projects/{project}/access/{access}', [ProjectAccessController::class, 'update'])->name('projects.access.update');
