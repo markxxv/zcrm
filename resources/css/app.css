@@ -1,0 +1,249 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.87 0 0);
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.87 0 0);
+}
+
+.dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.145 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.145 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.985 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.396 0.141 25.723);
+    --destructive-foreground: oklch(0.637 0.237 25.331);
+    --border: oklch(0.269 0 0);
+    --input: oklch(0.269 0 0);
+    --ring: oklch(0.439 0 0);
+    --chart-1: oklch(0.488 0.243 264.376);
+    --chart-2: oklch(0.696 0.17 162.48);
+    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.985 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(0.269 0 0);
+    --sidebar-ring: oklch(0.439 0 0);
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+
+    .yoopta-block-actions {
+        left: 34px !important;
+        transform: translateX(-46px) scale(0.95) !important;
+    }
+
+    .yoopta-editor {
+        /* padding-bottom: 0!important; */
+        @apply dark:selection:!bg-blue-600/30 dark:selection:!text-white;
+    }
+    .yoopta-editor,
+    .yoopta-bulleted-list,
+    .yoopta-paragraph {
+        font-size: 14px!important;
+    }
+    .yoopta-paragraph {
+        line-height: 1.4em!important;
+        margin-bottom: 1em!important;
+    }
+    .yoopta-todo-list,  .yoopta-bulleted-list {
+        padding-bottom: 0!important;
+        padding-top: .2rem!important;
+    }
+    .yoopta-toolbar-root, 
+    .yoopta-table-column-button, .yoopta-table-row-button,
+    .yoopta-block-options-menu-content,
+    .yoo-toolbar-p-2, 
+    .yoopta-action-menu-list-content,
+    .yoopta-action-menu-list-content .yoopta-button  .yoo-action-menu-flex  {
+        @apply 
+        !bg-white dark:!bg-zinc-900
+        text-gray-800 dark:text-zinc-200
+        border border-border
+        !border-gray-100 dark:!border-zinc-800
+        shadow-sm
+        rounded-md
+        ;
+    }
+    .yoopta-button {
+        @apply 
+          dark:!bg-zinc-800/0
+        ;
+    }
+    .yoopta-table-data-cell {
+        @apply dark:!border-zinc-700/50;
+    }
+    .yoopta-table-column-button svg, .yoopta-table-row-button svg {
+        @apply dark:!fill-white/30;
+    }
+
+
+    .yoopta-button:hover,
+    .yoopta-toolbar-separator {
+        @apply dark:!bg-zinc-700/30;
+    }
+    .yoo-toolbar-border-t, .yoopta-divider-solid {
+        @apply dark:!border-zinc-700/30;
+    }
+
+
+    .yoopta-block-actions {
+        @apply 
+        p-1
+        rounded
+        bg-white dark:bg-zinc-900
+        ;
+    }
+
+    .yoopta-action-menu-list {
+        @apply dark:invert;
+    }
+ 
+    .yoopta-block-actions-drag, 
+    .yoopta-block-actions-plus {
+        @apply text-gray-500 dark:!text-zinc-400;
+    }
+
+    .yoopta-todo-list-checkbox {
+        @apply !rounded-full !w-5 !h-5 dark:!border-zinc-600/50;
+    }
+    .yoopta-todo-list-checkbox--checked,
+    .yoopta-todo-list-checkbox--checked:hover {
+        @apply !bg-green-600/80 !border-green-600/80;
+    }
+    .yoopta-blockquote {
+        @apply bg-gray-100 dark:bg-zinc-800 rounded pb-1.5;
+    }
+    .yoopta-callout {
+        @apply bg-gray-100 dark:!bg-zinc-800 rounded !text-white/80;
+    }
+    .yoopta-code-cm-editor .cm-editor {
+        @apply dark:!border-zinc-700/30 dark:!bg-black/10;
+    }
+
+    .yoopta-heading-one {
+        font-size: 1.4em!important;
+    }
+    .yoopta-heading-two {
+        font-size: 1.3em!important;
+    }
+    .yoopta-heading-three {
+        font-size: 1.2em!important;
+    }
+
+
+    
+}
