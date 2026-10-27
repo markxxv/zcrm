@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import { router } from '@inertiajs/react';
-import { FileUp, Grid2X2, List, Download, Pencil, Trash2, UploadCloud } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { FileUp, Grid2X2, List, Download, Pencil, UploadCloud } from 'lucide-react';
+import { ProjectFileDialog } from './project-file-dialog';
 import type { Filters, Page, ProjectFile } from '@/types/project';
-import { AttachmentIcon, SectionHeader, Paginator, ResourceSearch, FilterSelect, fieldClass, mutedButton, outlineButton, solidButton, bytes, displayDate, useResourceFilters } from './resources';
+import { AttachmentIcon, SectionHeader, Paginator, ResourceSearch, FilterSelect, mutedButton, outlineButton, solidButton, bytes, displayDate, useResourceFilters } from './resources';
 
 type Props = { projectId: number; page: Page<ProjectFile> | null; filters: Filters; userId: number; ownerId: number };
 export function ProjectFiles({ projectId, page, filters, userId, ownerId }: Props) {
@@ -11,9 +11,6 @@ export function ProjectFiles({ projectId, page, filters, userId, ownerId }: Prop
     const [grid, setGrid] = useState(false);
     const [dragging, setDragging] = useState(false);
     const [selected, setSelected] = useState<ProjectFile | null>(null);
-    const [filename, setFilename] = useState('');
-    const [tags, setTags] = useState('');
-    const [busy, setBusy] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const uploadRef = useRef<HTMLInputElement>(null);
@@ -31,20 +28,7 @@ export function ProjectFiles({ projectId, page, filters, userId, ownerId }: Prop
             onFinish: () => { setUploadProgress(null); if (uploadRef.current) uploadRef.current.value = ''; },
         });
     };
-    const edit = (file: ProjectFile) => {
-        setSelected(file); setFilename(file.name); setTags((file.tags || []).join(', ')); setErrors({});
-    };
-    const save = () => {
-        if (!selected || !filename.trim()) return;
-        setBusy(true);
-        router.patch(fileUrl + '/' + selected.id, { name: filename, tags: tags.split(',').map((tag) => tag.trim()).filter(Boolean) }, {
-            preserveScroll: true, onSuccess: () => setSelected(null), onError: (e) => setErrors(e), onFinish: () => setBusy(false),
-        });
-    };
-    const remove = () => {
-        if (!selected || !window.confirm('Permanently delete this file?')) return;
-        router.delete(fileUrl + '/' + selected.id, { preserveScroll: true, onSuccess: () => setSelected(null) });
-    };
+    const edit = (file: ProjectFile) => setSelected(file);
     const download = (file: ProjectFile) => fileUrl + '/' + file.id + '/download';
     const canEdit = (file: ProjectFile) => ownerId === userId || file.uploaded_by === userId;
     return <>
@@ -78,21 +62,6 @@ export function ProjectFiles({ projectId, page, filters, userId, ownerId }: Prop
             </div>)}
         </div> : <div className="py-24 text-center text-xs text-muted-foreground">No matching files.</div>}
         <Paginator page={page} />
-        <Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}>
-            <DialogContent>
-                <DialogHeader><DialogTitle>File details</DialogTitle></DialogHeader>
-                {selected && <div className="grid gap-4">
-                    <div className="flex items-center gap-3"><AttachmentIcon file={selected} /><span className="text-xs text-muted-foreground">{bytes(selected.size)} · uploaded by {selected.uploader?.name}</span></div>
-                    <label className="grid gap-2 text-xs">Filename<input className={fieldClass} value={filename} onChange={(e) => setFilename(e.target.value)} /></label>
-                    <label className="grid gap-2 text-xs">Tags, separated by commas<input className={fieldClass} value={tags} onChange={(e) => setTags(e.target.value)} /></label>
-                    {Object.values(errors).length > 0 && <p className="text-xs text-red-600">{Object.values(errors)[0]}</p>}
-                    <div className="flex justify-end gap-2">
-                        <button className={mutedButton + ' mr-auto text-red-600'} onClick={remove}><Trash2 className="size-4" /> Delete</button>
-                        <a href={download(selected)} className={outlineButton}><Download className="size-4" /> Download</a>
-                        <button className={solidButton} disabled={busy} onClick={save}>{busy ? 'Saving…' : 'Save'}</button>
-                    </div>
-                </div>}
-            </DialogContent>
-        </Dialog>
+        <ProjectFileDialog projectId={projectId} file={selected} onOpenChange={(open) => { if (!open) setSelected(null); }} />
     </>;
 }
