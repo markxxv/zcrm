@@ -335,6 +335,35 @@ class ProjectsTest extends TestCase
         Storage::disk('local')->assertMissing($file->path);
     }
 
+    public function test_project_team_editor_saves_members_and_cannot_remove_owner(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $outsider = User::factory()->create();
+        $project = $this->project($owner);
+        $url = '/projects/'.$project->id.'/members';
+
+        $this->actingAs($owner)->put($url, [
+            'member_ids' => [$member->id],
+        ])->assertRedirect();
+
+        $this->assertEqualsCanonicalizing(
+            [$owner->id, $member->id],
+            $project->members()->pluck('users.id')->all()
+        );
+
+        $this->actingAs($member)->put($url, [
+            'member_ids' => [$outsider->id],
+        ])->assertForbidden();
+
+        $this->actingAs($owner)->put($url, [
+            'member_ids' => [],
+        ])->assertRedirect();
+
+        $this->assertSame([$owner->id], $project->members()->pluck('users.id')->all());
+        $this->actingAs($outsider)->get('/projects/'.$project->id)->assertForbidden();
+    }
+
     public function test_non_members_cannot_read_or_modify_projects(): void
     {
         $owner = User::factory()->create();
