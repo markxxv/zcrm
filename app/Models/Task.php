@@ -3,25 +3,28 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Task extends Model
 {
-    protected $guarded = ['id'];
+    protected $fillable = ['title', 'description', 'priority', 'due_date', 'is_completed', 'completed_at'];
 
     protected $casts = [
         'is_completed' => 'boolean',
-        'due_date' => 'date',
+        'due_date' => 'date:Y-m-d',
         'completed_at' => 'datetime',
     ];
 
-    // Relationships
-    public function assignedUsers()
+    public function assignedUsers(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'task_user')
-                    ->withTimestamps();
+        return $this->belongsToMany(User::class, 'task_user')->withTimestamps();
     }
 
-    // Scopes
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_task')->withTimestamps();
+    }
+
     public function scopeDueToday($query)
     {
         return $query->whereDate('due_date', today());
@@ -29,8 +32,7 @@ class Task extends Model
 
     public function scopePastDue($query)
     {
-        return $query->where('due_date', '<', today())
-                     ->where('is_completed', false);
+        return $query->whereDate('due_date', '<', today())->where('is_completed', false);
     }
 
     public function scopeByDate($query, $date)
