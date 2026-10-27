@@ -14,7 +14,8 @@ class ChunkUpload extends Model
 
     protected $fillable = [
         'user_id', 'target_type', 'target_id', 'client_key', 'name',
-        'mime_type', 'size', 'chunk_size', 'total_chunks', 'status', 'expires_at',
+        'mime_type', 'size', 'chunk_size', 'total_chunks', 'assembled_chunks',
+        'status', 'result_id', 'expires_at',
     ];
 
     protected function casts(): array
