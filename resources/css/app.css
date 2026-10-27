@@ -141,109 +141,89 @@
         @apply bg-background text-foreground;
     }
 
-    .yoopta-block-actions {
-        left: 34px !important;
-        transform: translateX(-46px) scale(0.95) !important;
+}
+
+@layer components {
+    .task-rich-editor .tiptap {
+        font-size: 14px;
+        line-height: 1.65;
+        color: var(--foreground);
+        overflow-wrap: anywhere;
     }
 
-    .yoopta-editor {
-        /* padding-bottom: 0!important; */
-        @apply dark:selection:!bg-blue-600/30 dark:selection:!text-white;
-    }
-    .yoopta-editor,
-    .yoopta-bulleted-list,
-    .yoopta-paragraph {
-        font-size: 14px!important;
-    }
-    .yoopta-paragraph {
-        line-height: 1.4em!important;
-        margin-bottom: 1em!important;
-    }
-    .yoopta-todo-list,  .yoopta-bulleted-list {
-        padding-bottom: 0!important;
-        padding-top: .2rem!important;
-    }
-    .yoopta-toolbar-root, 
-    .yoopta-table-column-button, .yoopta-table-row-button,
-    .yoopta-block-options-menu-content,
-    .yoo-toolbar-p-2, 
-    .yoopta-action-menu-list-content,
-    .yoopta-action-menu-list-content .yoopta-button  .yoo-action-menu-flex  {
-        @apply 
-        !bg-white dark:!bg-zinc-900
-        text-gray-800 dark:text-zinc-200
-        border border-border
-        !border-gray-100 dark:!border-zinc-800
-        shadow-sm
-        rounded-md
-        ;
-    }
-    .yoopta-button {
-        @apply 
-          dark:!bg-zinc-800/0
-        ;
-    }
-    .yoopta-table-data-cell {
-        @apply dark:!border-zinc-700/50;
-    }
-    .yoopta-table-column-button svg, .yoopta-table-row-button svg {
-        @apply dark:!fill-white/30;
+    .task-rich-editor .tiptap > * + * {
+        margin-top: .6rem;
     }
 
-
-    .yoopta-button:hover,
-    .yoopta-toolbar-separator {
-        @apply dark:!bg-zinc-700/30;
-    }
-    .yoo-toolbar-border-t, .yoopta-divider-solid {
-        @apply dark:!border-zinc-700/30;
-    }
-
-
-    .yoopta-block-actions {
-        @apply 
-        p-1
-        rounded
-        bg-white dark:bg-zinc-900
-        ;
+    .task-rich-editor .tiptap p.is-editor-empty:first-child::before {
+        content: attr(data-placeholder);
+        color: var(--muted-foreground);
+        opacity: .7;
+        pointer-events: none;
+        float: left;
+        height: 0;
     }
 
-    .yoopta-action-menu-list {
-        @apply dark:invert;
+    .task-rich-editor .tiptap h1 { font-size: 1.45rem; font-weight: 600; }
+    .task-rich-editor .tiptap h2 { font-size: 1.2rem; font-weight: 600; }
+    .task-rich-editor .tiptap h3 { font-size: 1.05rem; font-weight: 600; }
+    .task-rich-editor .tiptap ul:not([data-type="taskList"]) { list-style-type: disc; padding-left: 1.5rem; }
+    .task-rich-editor .tiptap ol { list-style-type: decimal; padding-left: 1.5rem; }
+    .task-rich-editor .tiptap li { margin: .2rem 0; }
+    .task-rich-editor .tiptap li p { margin: 0; }
+    .task-rich-editor .tiptap ul[data-type="taskList"] { list-style: none; padding: 0; }
+    .task-rich-editor .tiptap ul[data-type="taskList"] > li {
+        display: flex;
+        align-items: flex-start;
+        gap: .65rem;
     }
- 
-    .yoopta-block-actions-drag, 
-    .yoopta-block-actions-plus {
-        @apply text-gray-500 dark:!text-zinc-400;
+    .task-rich-editor .tiptap ul[data-type="taskList"] > li > label { padding-top: .2rem; }
+    .task-rich-editor .tiptap ul[data-type="taskList"] > li > div { flex: 1; }
+    .task-rich-editor .tiptap blockquote {
+        padding: .5rem 1rem;
+        border-left: 2px solid var(--muted-foreground);
+        background: var(--muted);
+        border-radius: .3rem;
     }
-
-    .yoopta-todo-list-checkbox {
-        @apply !rounded-full !w-5 !h-5 dark:!border-zinc-600/50;
+    .task-rich-editor .tiptap aside[data-type="callout"] {
+        padding: .75rem 1rem;
+        background: var(--muted);
+        border-radius: .5rem;
     }
-    .yoopta-todo-list-checkbox--checked,
-    .yoopta-todo-list-checkbox--checked:hover {
-        @apply !bg-green-600/80 !border-green-600/80;
+    .task-rich-editor .tiptap pre {
+        padding: 1rem;
+        overflow-x: auto;
+        background: var(--muted);
+        border-radius: .5rem;
+        font-size: 12px;
+        tab-size: 4;
     }
-    .yoopta-blockquote {
-        @apply bg-gray-100 dark:bg-zinc-800 rounded pb-1.5;
+    .task-rich-editor .tiptap code:not(pre code) {
+        padding: .1rem .3rem;
+        border-radius: .25rem;
+        background: var(--muted);
+        font-size: .9em;
     }
-    .yoopta-callout {
-        @apply bg-gray-100 dark:!bg-zinc-800 rounded !text-white/80;
+    .task-rich-editor .tiptap a { text-decoration: underline; text-underline-offset: 3px; }
+    .task-rich-editor .tiptap mark { background: #fde68a; color: #27272a; }
+    .task-rich-editor .tiptap table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .task-rich-editor .tiptap th, .task-rich-editor .tiptap td {
+        min-width: 60px;
+        padding: .4rem .6rem;
+        border: 1px solid var(--border);
+        vertical-align: top;
     }
-    .yoopta-code-cm-editor .cm-editor {
-        @apply dark:!border-zinc-700/30 dark:!bg-black/10;
+    .task-rich-editor .tiptap th { background: var(--muted); font-weight: 600; }
+    .task-rich-editor .tiptap .selectedCell { background: var(--accent); }
+    .task-rich-editor .tiptap .tableWrapper { overflow-x: auto; }
+    .task-rich-editor .tiptap img {
+        display: block;
+        max-width: 100%;
+        max-height: 560px;
+        width: auto;
+        height: auto;
+        border-radius: .5rem;
+        cursor: zoom-in;
     }
-
-    .yoopta-heading-one {
-        font-size: 1.4em!important;
-    }
-    .yoopta-heading-two {
-        font-size: 1.3em!important;
-    }
-    .yoopta-heading-three {
-        font-size: 1.2em!important;
-    }
-
-
-    
+    .task-rich-editor .tiptap hr { margin: 1.2rem 0; border-top: 1px solid var(--border); }
 }

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useForm } from '@inertiajs/react';
 import {
   Drawer,
@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { TaskEditor } from './task-editor';
+const TaskEditor = lazy(() => import('./task-editor').then(({ TaskEditor }) => ({ default: TaskEditor })));
 import { TaskAttachments } from './task-attachments';
 import { PrioritySelector } from './priority-selector';
 import { ProjectSelector } from './project-selector';
@@ -29,6 +29,7 @@ interface TaskDrawerProps {
 }
 
 export function TaskDrawer({ task, open, onOpenChange, availableUsers, availableProjects, onFilesChanged }: TaskDrawerProps) {
+  const [uploadingImage, setUploadingImage] = useState(false);
   const { data, setData, patch, delete: destroy, processing, reset } = useForm({
     task_id: 0,
     title: '',
@@ -55,7 +56,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!task) return;
+    if (!task || uploadingImage) return;
 
     patch('/tasks', {
       preserveScroll: true,
@@ -67,7 +68,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
   };
 
   const handleDelete = () => {
-    if (!task) return;
+    if (!task || uploadingImage) return;
     if (!confirm('Are you sure you want to delete this task?')) return;
 
     destroy('/tasks', {
@@ -90,7 +91,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
   if (!task) return null;
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange} direction="right" >
+    <Drawer open={open} onOpenChange={(next) => { if (!next && uploadingImage) return; onOpenChange(next); }} direction="right" >
       <DrawerContent className="h-full w-full sm:min-w-[600px] ml-auto rounded-none outline-0">
         {/* Compact Header */}
         <div className="flex items-center justify-between px-6 pt-4">
@@ -99,7 +100,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
             Edit task details, description, and due date
           </DrawerDescription>
           <DrawerClose asChild>
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8">
+            <Button type="button" variant="ghost" size="icon" disabled={uploadingImage} className="h-8 w-8">
               <X className="h-4 w-4" />
             </Button>
           </DrawerClose>
@@ -154,11 +155,16 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
               {/* Description */}
               <div className="space-y-2">
                 <Label htmlFor="description" className="text-sm font-medium">Description</Label>
-                <TaskEditor
-                  content={data.description}
-                  onChange={(content) => setData('description', content)}
-                  placeholder="Add a description..."
-                />
+                <Suspense fallback={<div className="min-h-44 rounded-xl bg-muted/30" />}>
+                  <TaskEditor
+                    key={task.id}
+                    taskId={task.id}
+                    content={data.description}
+                    onChange={(content) => setData('description', content)}
+                    onUploadingChange={setUploadingImage}
+                    placeholder="Add a description..."
+                  />
+                </Suspense>
               </div>
 
               {/* Compact inline files and links, shared between Tasks and Projects. */}
@@ -187,7 +193,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
                 variant="ghost"
                 size="sm"
                 onClick={handleDelete}
-                disabled={processing}
+                disabled={processing || uploadingImage}
                 className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
@@ -195,12 +201,12 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
               </Button>
               <div className="flex gap-2">
                 <DrawerClose asChild>
-                  <Button type="button" variant="outline" size="sm" disabled={processing}>
+                  <Button type="button" variant="outline" size="sm" disabled={processing || uploadingImage}>
                     Cancel
                   </Button>
                 </DrawerClose>
-                <Button type="submit" size="sm" disabled={processing}>
-                  {processing ? 'Saving...' : 'Save'}
+                <Button type="submit" size="sm" disabled={processing || uploadingImage}>
+                  {processing ? 'Saving...' : uploadingImage ? 'Uploading image…' : 'Save'}
                 </Button>
               </div>
             </div>
