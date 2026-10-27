@@ -8,8 +8,9 @@ import {
 import { useActiveUrl } from '@/hooks/use-active-url';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
+import { type ReactNode } from 'react';
 
-export function NavMain({ items = [] }: { items: NavItem[] }) {
+export function NavMain({ items = [], projectAction }: { items: NavItem[]; projectAction?: ReactNode }) {
     const { urlIsActive } = useActiveUrl();
 
     return (
@@ -28,6 +29,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                 <span>{item.title}</span>
                             </Link>
                         </SidebarMenuButton>
+                        {item.title === 'Projects' && projectAction}
                     </SidebarMenuItem>
                 ))}
             </SidebarMenu>

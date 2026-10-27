@@ -1,5 +1,6 @@
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
+import { ProjectQuickCreate } from '@/components/projects/project-quick-create';
 import { NavUser } from '@/components/nav-user';
 import {
     Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -34,7 +35,7 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={mainNavItems} projectAction={<ProjectQuickCreate />} />
                 {projectNav.length > 0 && (
                     <div className="group-data-[collapsible=icon]:hidden space-y-0.5 px-5 pt-1">
                         {projectNav.map((project) => (
