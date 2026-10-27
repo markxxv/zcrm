@@ -117,10 +117,14 @@ class FileThumbnailsTest extends TestCase
         $this->actingAs($member)->get('/projects/'.$project->id.'/task-files/'.$file->id.'/thumbnail')
             ->assertOk()->assertHeader('Content-Type', 'image/webp');
 
+        // TaskPolicy allows members of every linked project to access a task.
         $this->actingAs($member)->get('/tasks/'.$task->id.'/files/'.$file->id.'/thumbnail')
-            ->assertForbidden();
+            ->assertOk()->assertHeader('Content-Type', 'image/webp');
 
         $this->actingAs($outsider)->get('/projects/'.$project->id.'/task-files/'.$file->id.'/thumbnail')
+            ->assertForbidden();
+
+        $this->actingAs($outsider)->get('/tasks/'.$task->id.'/files/'.$file->id.'/thumbnail')
             ->assertForbidden();
 
         $other = $this->project($owner);
