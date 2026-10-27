@@ -392,6 +392,55 @@ class ProjectsTest extends TestCase
         $this->assertDatabaseMissing('tasks', ['title' => 'Unauthorized']);
     }
 
+    public function test_project_editors_receive_existing_tags_and_link_categories_as_suggestions(): void
+    {
+        $owner = User::factory()->create();
+        $project = $this->project($owner);
+
+        $project->links()->create([
+            'title' => 'Plan', 'url' => 'https://example.com/plan',
+            'category' => 'Content', 'pinned' => true, 'kind' => 'web',
+            'created_by' => $owner->id,
+        ]);
+        $project->links()->create([
+            'title' => 'Budget', 'url' => 'https://example.com/budget',
+            'category' => 'Finance', 'pinned' => false, 'kind' => 'web',
+            'created_by' => $owner->id,
+        ]);
+        $project->files()->create([
+            'name' => 'brief.pdf', 'path' => 'projects/'.$project->id.'/brief.pdf',
+            'disk' => 'local', 'size' => 123, 'uploaded_by' => $owner->id,
+            'tags' => ['client', 'brand'],
+        ]);
+        $project->files()->create([
+            'name' => 'sheet.xlsx', 'path' => 'projects/'.$project->id.'/sheet.xlsx',
+            'disk' => 'local', 'size' => 100, 'uploaded_by' => $owner->id,
+            'tags' => ['brand', 'finance'],
+        ]);
+
+        $this->actingAs($owner)->get('/projects/'.$project->id)->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->where('linkCategories', ['Content', 'Finance'])
+                ->where('fileTagSuggestions', ['brand', 'client', 'finance'])
+                ->etc());
+
+        $file = $project->files()->where('name', 'brief.pdf')->firstOrFail();
+        $this->actingAs($owner)->patch('/projects/'.$project->id.'/files/'.$file->id, [
+            'name' => 'updated-brief.pdf',
+            'tags' => ['brand', 'finance'],
+        ])->assertRedirect();
+        $this->assertSame(['brand', 'finance'], $file->fresh()->tags);
+
+        $link = $project->links()->where('title', 'Plan')->firstOrFail();
+        $this->actingAs($owner)->patch('/projects/'.$project->id.'/links/'.$link->id, [
+            'title' => 'Updated plan',
+            'url' => 'https://example.com/new-plan',
+            'category' => 'Operations',
+            'pinned' => true,
+        ])->assertRedirect();
+        $this->assertSame('Operations', $link->fresh()->category);
+    }
+
     public function test_links_detect_google_services_and_pin_to_main(): void
     {
         $owner = User::factory()->create();
