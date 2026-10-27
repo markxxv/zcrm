@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { TaskDueDatePicker } from './task-due-date-picker';
 import { Label } from '@/components/ui/label';
 const TaskEditor = lazy(() => import('./task-editor').then(({ TaskEditor }) => ({ default: TaskEditor })));
 import { TaskAttachments } from './task-attachments';
@@ -177,13 +178,10 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
               {/* Due Date */}
               <div className="space-y-2">
                 <Label htmlFor="due_date" className="text-sm font-medium">Due Date</Label>
-                <Input
-                  id="due_date"
-                  type="date"
+                <TaskDueDatePicker
                   value={data.due_date}
-                  onChange={(e) => setData('due_date', e.target.value)}
+                  onChange={(date) => setData('due_date', date)}
                   disabled={processing}
-                  className="text-[15px]"
                 />
               </div>
             </div>
