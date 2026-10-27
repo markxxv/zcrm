@@ -170,7 +170,7 @@ class ProjectController extends Controller
     {
         $this->authorize('manageMembers', $project);
         $data = $request->validate([
-            'member_ids' => ['required', 'array'],
+            'member_ids' => ['present', 'array'],
             'member_ids.*' => ['integer', 'distinct', 'exists:users,id'],
         ]);
         $project->members()->sync(array_unique(array_merge(
