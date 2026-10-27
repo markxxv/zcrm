@@ -15,16 +15,23 @@ class PruneChunkUploads extends Command
     {
         $removed = 0;
 
-        ChunkUpload::query()
-            ->where('expires_at', '<', now())
-            ->orderBy('created_at')
-            ->chunk(100, function ($uploads) use (&$removed) {
-                foreach ($uploads as $upload) {
-                    Storage::disk('local')->deleteDirectory($upload->folder());
-                    $upload->delete();
-                    $removed++;
-                }
-            });
+        // Always read from the beginning: deleting while using offset
+        // pagination would otherwise skip half the expired sessions.
+        while (true) {
+            $uploads = ChunkUpload::query()
+                ->where('expires_at', '<', now())
+                ->limit(100)->get();
+
+            if ($uploads->isEmpty()) {
+                break;
+            }
+
+            foreach ($uploads as $upload) {
+                Storage::disk('local')->deleteDirectory($upload->folder());
+                $upload->delete();
+                $removed++;
+            }
+        }
 
         $this->info("Pruned {$removed} expired upload sessions.");
 

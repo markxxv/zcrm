@@ -135,9 +135,14 @@ class ChunkUploadController extends Controller
             abort_unless($upload->status === 'uploading', 409, 'Upload has already started assembly.');
 
             $existing = $upload->parts()->where('chunk_index', $index)->first();
-            if ($existing && hash_equals($existing->sha256, $data['sha256'])
-                && Storage::disk('local')->exists($upload->partPath($index))) {
-                return response()->json(['chunk_index' => $index, 'received' => true]);
+            if ($existing) {
+                abort_unless(hash_equals($existing->sha256, $data['sha256']), 409,
+                    'This chunk differs from the one already received. Cancel and restart this upload.');
+                if (Storage::disk('local')->exists($upload->partPath($index))) {
+                    return response()->json(['chunk_index' => $index, 'received' => true]);
+                }
+                // The database record exists, but the temporary chunk was lost.
+                $upload->parts()->where('chunk_index', $index)->delete();
             }
 
             $stored = $part->storeAs($upload->folder(), sprintf('%06d', $index).'.part', 'local');
@@ -145,7 +150,7 @@ class ChunkUploadController extends Controller
                 throw ValidationException::withMessages(['chunk' => 'Could not write the file chunk. Check available disk space.']);
             }
 
-            $upload->parts()->updateOrCreate(['chunk_index' => $index], [
+            $upload->parts()->create(['chunk_index' => $index] + [
                 'size' => $part->getSize(),
                 'sha256' => $data['sha256'],
             ]);
