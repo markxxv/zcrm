@@ -12,7 +12,7 @@ import {
     Bold, Italic, Underline, Strikethrough, Code2, Highlighter, Link2,
     List, ListOrdered, ListTodo, Quote, Table2, ImagePlus,
     Heading1, Heading2, Heading3, Minus, X, LoaderCircle, Undo2, Redo2,
-    Plus, Rows3, Columns3, Trash2,
+    Rows3, Columns3, Trash2,
 } from 'lucide-react';
 import { readTaskDescription } from '@/lib/legacy-task-content';
 import { uploadTaskEditorImage } from '@/lib/task-editor-upload';
@@ -39,6 +39,8 @@ const toolClass = 'inline-flex size-8 shrink-0 items-center justify-center round
 const selectedClass = 'bg-muted text-foreground';
 
 export function TaskEditor({ taskId, content, onChange, onUploadingChange, placeholder = 'Write a description…' }: Props) {
+    const uploadChangeRef = useRef(onUploadingChange);
+    uploadChangeRef.current = onUploadingChange;
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
     const uploadingRef = useRef(false);
@@ -82,13 +84,13 @@ export function TaskEditor({ taskId, content, onChange, onUploadingChange, place
 
     useEffect(() => () => {
         abort.current?.abort();
-        onUploadingChange?.(false);
-    }, [onUploadingChange]);
+        uploadChangeRef.current?.(false);
+    }, []);
 
     async function uploadFiles(files: File[]) {
         if (!editor || uploadingRef.current || files.length === 0) return;
         uploadingRef.current = true;
-        onUploadingChange?.(true);
+        uploadChangeRef.current?.(true);
         const controller = new AbortController();
         abort.current = controller;
         setError('');
@@ -117,7 +119,7 @@ export function TaskEditor({ taskId, content, onChange, onUploadingChange, place
         } finally {
             uploadingRef.current = false;
             abort.current = null;
-            onUploadingChange?.(false);
+            uploadChangeRef.current?.(false);
             setUpload(null);
         }
     }

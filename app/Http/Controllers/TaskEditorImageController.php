@@ -28,7 +28,7 @@ class TaskEditorImageController extends Controller
             $url = route('tasks.editor-images.show', [$task, $file]);
             // Repeated completion calls must not encode the file a second time.
             if ($file->mime_type === 'image/webp' && $file->extension === 'webp'
-                && str_ends_with($file->path, '.webp')) {
+                && str_contains($file->path, '/editor-images/')) {
                 return response()->json(['url' => $url, 'id' => $file->id, 'size' => $file->size]);
             }
 
@@ -53,7 +53,7 @@ class TaskEditorImageController extends Controller
                 throw ValidationException::withMessages(['image' => 'Image could not be decoded.']);
             }
 
-            $newPath = 'tasks/'.$task->id.'/'.Str::uuid().'.webp';
+            $newPath = 'tasks/'.$task->id.'/editor-images/'.Str::uuid().'.webp';
             $destination = $disk->path($newPath);
             if (! is_dir(dirname($destination)) && ! mkdir(dirname($destination), 0700, true) && ! is_dir(dirname($destination))) {
                 abort(507, 'Could not create image directory.');
@@ -86,7 +86,7 @@ class TaskEditorImageController extends Controller
                     'extension' => 'webp',
                     'size' => $newSize,
                 ]);
-                $disk->delete($oldPath);
+                abort_unless($disk->delete($oldPath), 507, 'Could not remove original image.');
             } catch (\Throwable $exception) {
                 $disk->delete($newPath);
                 throw $exception;

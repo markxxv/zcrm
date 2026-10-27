@@ -57,7 +57,7 @@ function convertBlock(block: LegacyBlock): JSONContent[] {
         return [{ type: 'heading', attrs: { level: { headingone: 1, headingtwo: 2, headingthree: 3 }[type] }, content }];
     }
     if (type === 'blockquote' || type === 'callout') {
-        return [{ type: 'blockquote', content: [paragraph(content)] }];
+        return [{ type: type === 'callout' ? 'callout' : 'blockquote', content: [paragraph(content)] }];
     }
     if (type === 'code' || type === 'codeblock') {
         return [{ type: 'codeBlock', content: [{ type: 'text', text: textFrom(value) || ' ' }] }];
