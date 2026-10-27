@@ -113,6 +113,174 @@ class ProjectsTest extends TestCase
                 ->etc());
     }
 
+    public function test_main_and_files_show_direct_and_task_files_in_one_sorted_library(): void
+    {
+        Storage::fake('local');
+        $owner = User::factory()->create();
+        $project = $this->project($owner);
+
+        $direct = $project->files()->create([
+            'name' => 'brand-guide.pdf',
+            'path' => 'projects/'.$project->id.'/brand-guide.pdf',
+            'disk' => 'local',
+            'size' => 1200,
+            'extension' => 'pdf',
+            'tags' => ['brand'],
+            'uploaded_by' => $owner->id,
+        ]);
+
+        $task = Task::create([
+            'title' => 'Prepare visual assets',
+            'priority' => 'high',
+            'due_date' => today()->toDateString(),
+        ]);
+        $task->projects()->attach($project->id);
+        $task->assignedUsers()->attach($owner->id);
+        $attachment = $task->files()->create([
+            'name' => 'asset-list.png',
+            'path' => 'tasks/'.$task->id.'/asset-list.png',
+            'disk' => 'local',
+            'size' => 2400,
+            'extension' => 'png',
+            'uploaded_by' => $owner->id,
+        ]);
+
+        $this->actingAs($owner)->get('/projects/'.$project->id)
+            ->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('projects/show')
+                ->where('counts.files', 2)
+                ->has('recentFiles', 2)
+                ->where('recentFiles.0.source', 'task')
+                ->where('recentFiles.0.task_title', 'Prepare visual assets')
+                ->where('recentFiles.0.can_edit', true)
+                ->where('recentFiles.1.source', 'project')
+                ->etc());
+
+        $this->actingAs($owner)->get('/projects/'.$project->id.'?tab=files&sort=name')
+            ->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('projects/show')
+                ->has('files.data', 2)
+                ->where('files.data.0.id', $attachment->id)
+                ->where('files.data.0.source', 'task')
+                ->where('files.data.0.task_id', $task->id)
+                ->where('files.data.1.id', $direct->id)
+                ->where('files.data.1.source', 'project')
+                ->etc());
+
+        $this->actingAs($owner)->get('/projects/'.$project->id.'?tab=files&type=pdf')
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->has('files.data', 1)
+                ->where('files.data.0.source', 'project')
+                ->etc());
+
+        $this->actingAs($owner)->get('/projects/'.$project->id.'?tab=files&q=visual+assets')
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->has('files.data', 1)
+                ->where('files.data.0.source', 'task')
+                ->etc());
+    }
+
+    public function test_task_files_are_paginated_with_project_files(): void
+    {
+        $owner = User::factory()->create();
+        $project = $this->project($owner);
+        $task = Task::create([
+            'title' => 'Batch upload',
+            'priority' => 'medium',
+            'due_date' => today()->toDateString(),
+        ]);
+        $task->projects()->attach($project->id);
+        $task->assignedUsers()->attach($owner->id);
+
+        for ($i = 1; $i <= 23; $i++) {
+            $task->files()->create([
+                'name' => 'image-'.$i.'.png',
+                'path' => 'tasks/'.$task->id.'/'.$i.'.png',
+                'disk' => 'local',
+                'size' => $i * 10,
+                'extension' => 'png',
+                'uploaded_by' => $owner->id,
+            ]);
+        }
+
+        $project->files()->create([
+            'name' => 'readme.txt',
+            'path' => 'projects/'.$project->id.'/readme.txt',
+            'disk' => 'local',
+            'size' => 12,
+            'extension' => 'txt',
+            'uploaded_by' => $owner->id,
+        ]);
+
+        $this->actingAs($owner)->get('/projects/'.$project->id.'?tab=files&page=1')
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->where('counts.files', 24)
+                ->has('files.data', 20)
+                ->where('files.total', 24)
+                ->where('files.last_page', 2)
+                ->etc());
+
+        $this->actingAs($owner)->get('/projects/'.$project->id.'?tab=files&page=2')
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->has('files.data', 4)
+                ->where('files.current_page', 2)
+                ->etc());
+    }
+
+    public function test_project_member_can_download_shared_task_file_but_cannot_edit_without_task_permission(): void
+    {
+        Storage::fake('local');
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $outsider = User::factory()->create();
+        $first = $this->project($owner);
+        $first->members()->attach($member->id);
+        $second = $this->project($owner);
+
+        $task = Task::create([
+            'title' => 'Shared confidential task',
+            'priority' => 'medium',
+            'due_date' => today()->toDateString(),
+        ]);
+        $task->projects()->attach([$first->id, $second->id]);
+        $task->assignedUsers()->attach($owner->id);
+        $file = $task->files()->create([
+            'name' => 'brief.pdf',
+            'path' => 'tasks/'.$task->id.'/brief.pdf',
+            'disk' => 'local',
+            'size' => 100,
+            'extension' => 'pdf',
+            'uploaded_by' => $owner->id,
+        ]);
+        Storage::disk('local')->put($file->path, 'private attachment');
+
+        $this->actingAs($member)->get('/projects/'.$first->id.'?tab=files')
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->has('files.data', 1)
+                ->where('files.data.0.can_edit', false)
+                ->etc());
+
+        $url = '/projects/'.$first->id.'/task-files/'.$file->id;
+        $this->actingAs($member)->get($url.'/download')->assertOk();
+        $this->actingAs($member)->patch($url, ['name' => 'Changed.pdf'])->assertForbidden();
+        $this->actingAs($member)->delete($url)->assertForbidden();
+        Storage::disk('local')->assertExists($file->path);
+
+        $this->actingAs($outsider)->get($url.'/download')->assertForbidden();
+        $this->actingAs($outsider)->get('/projects/'.$first->id.'?tab=files')->assertForbidden();
+
+        $unrelated = $this->project($owner);
+        $this->actingAs($owner)->get('/projects/'.$unrelated->id.'/task-files/'.$file->id.'/download')
+            ->assertNotFound();
+
+        $this->actingAs($owner)->patch($url, ['name' => 'Renamed.pdf'])->assertRedirect();
+        $this->assertSame('Renamed.pdf', $file->fresh()->name);
+        $this->actingAs($owner)->delete($url)->assertRedirect();
+        Storage::disk('local')->assertMissing($file->path);
+    }
+
     public function test_non_members_cannot_read_or_modify_projects(): void
     {
         $owner = User::factory()->create();
