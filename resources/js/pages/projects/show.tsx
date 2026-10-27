@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { TaskDrawer } from '@/components/tasks/task-drawer';
 import { TaskInput } from '@/components/tasks/task-input';
@@ -13,9 +13,9 @@ import { ProjectFileUploader } from '@/components/projects/project-file-uploader
 import { ProjectFileRow } from '@/components/projects/project-file-row';
 import { ProjectAccessTab } from '@/components/projects/project-access';
 import { ProjectSettingsDialog } from '@/components/projects/project-settings-dialog';
-import { AttachmentIcon, Avatar, SectionHeader, ServiceIcon, bytes, domain, mutedButton, outlineButton, solidButton } from '@/components/projects/resources';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, ChevronRight, ArrowUpRight, Settings2, Check, Link2, Files, KeyRound, LayoutGrid, Users, Pencil } from 'lucide-react';
+import { ProjectMemberManager } from '@/components/projects/project-member-manager';
+import { Avatar, SectionHeader, ServiceIcon, domain, mutedButton, outlineButton } from '@/components/projects/resources';
+import { Plus, ArrowUpRight, Check, Link2, Files, KeyRound, LayoutGrid, Pencil } from 'lucide-react';
 import type { SharedData } from '@/types';
 import type { Task, TaskPriority } from '@/types/task';
 import type { ProjectShowProps, Person, ProjectLink, ProjectFile } from '@/types/project';
@@ -46,10 +46,6 @@ export default function ProjectShow(props: ProjectShowProps) {
     const [taskFilter, setTaskFilter] = useState<'open' | 'all' | 'completed'>('open');
     const [taskDrawer, setTaskDrawer] = useState<Task | null>(null);
     const [settingsOpen, setSettingsOpen] = useState(false);
-    const [membersOpen, setMembersOpen] = useState(false);
-    const [memberIds, setMemberIds] = useState<number[]>(project.members.map((user) => user.id));
-    const [formBusy, setFormBusy] = useState(false);
-    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const taskInputRef = useRef<HTMLInputElement>(null);
     const [linkDialogOpen, setLinkDialogOpen] = useState(false);
     const [editingLink, setEditingLink] = useState<ProjectLink | null>(null);
@@ -86,39 +82,19 @@ export default function ProjectShow(props: ProjectShowProps) {
     const toggleTask = (task: Task) => {
         router.patch('/tasks', { task_id: task.id, is_completed: !task.is_completed }, { preserveScroll: true });
     };
-    const saveMembers = () => {
-        setFormBusy(true); setFormErrors({});
-        router.put(base + '/members', { member_ids: memberIds }, {
-            preserveScroll: true, onSuccess: () => setMembersOpen(false),
-            onError: setFormErrors, onFinish: () => setFormBusy(false),
-        });
-    };
     const settings = () => setSettingsOpen(true);
-    const team = () => { setMemberIds(project.members.map((user) => user.id)); setFormErrors({}); setMembersOpen(true); };
 
-    return <AppLayout breadcrumbs={[{ title: 'Projects', href: '/projects' }, { title: project.name, href: base }]}>
+    return <AppLayout
+        breadcrumbs={[{ title: 'Projects', href: '/projects' }, { title: project.name, href: base }]}
+        breadcrumbAction={canManage && <button type="button" onClick={settings}
+            title="Edit project" aria-label="Edit project"
+            className="grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+            <Pencil className="size-3.5" />
+        </button>}
+    >
         <Head title={project.name + ' · Projects'} />
-        <div className="mx-auto w-full max-w-[1480px] px-5 py-8 sm:px-9 lg:px-12">
-            <div className="mb-4 flex items-center gap-2 text-[11px] tracking-wide text-muted-foreground">
-                <Link className="hover:text-foreground" href="/projects">Projects</Link><ChevronRight className="size-3" />
-                <span>PRJ-{String(project.id).padStart(3, '0')}</span>
-                <span className={'ml-2 size-1.5 rounded-full ' + (project.status === 'active' ? 'bg-green-500' : project.status === 'paused' ? 'bg-amber-500' : 'bg-muted-foreground')} />
-                <span className="capitalize">{project.status}</span>
-            </div>
-            <div className="mb-3 flex flex-wrap items-start justify-between gap-5">
-                <div className="min-w-0">
-                    <h1 className="break-words text-3xl font-light tracking-tight sm:text-4xl">{project.name}</h1>
-                    <p className="mt-3 max-w-2xl text-xs text-muted-foreground sm:text-sm">{project.description || 'No project description yet.'}</p>
-                </div>
-                {canManage && <button className={outlineButton} onClick={settings}><Settings2 className="size-4" /> Edit project</button>}
-            </div>
-            <div className="mb-7 flex items-center gap-3">
-                <div className="flex -space-x-2">{project.members.slice(0, 6).map((person) => <Avatar key={person.id} user={person} />)}</div>
-                {canManage && <button className="grid size-8 place-items-center rounded-full bg-muted/70 hover:bg-muted" title="Manage team" onClick={team}><Plus className="size-4 text-muted-foreground" /></button>}
-                <span className="text-[11px] text-muted-foreground">{project.members.length} project members</span>
-            </div>
-
-            <nav className="mb-9 flex items-center gap-7 overflow-x-auto border-b border-border/70" aria-label="Project tabs">
+        <div className="mx-auto w-full max-w-[1480px] px-5 pb-8 pt-5 sm:px-9 lg:px-12">
+            <nav className="mb-8 flex items-center gap-7 overflow-x-auto border-b border-border/70" aria-label="Project tabs">
                 {tabs.map(({ key, title, Icon }) => <button key={key} onClick={() => changeTab(key)}
                     className={'flex shrink-0 items-center gap-2 border-b-2 pb-4 pt-2 text-xs font-medium transition-colors ' + (filters.tab === key ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground')}>
                     <Icon className="size-4" /> {title}
@@ -203,9 +179,8 @@ export default function ProjectShow(props: ProjectShowProps) {
                         <ProjectFileUploader projectId={project.id} compact />
                     </section>
                     <section>
-                        <SectionHeader title="Project team" action={canManage && <button className={mutedButton} onClick={team}>Manage <ArrowUpRight className="size-4" /></button>} />
-                        <div className="flex -space-x-2">{project.members.map((person) => <Avatar key={person.id} user={person} />)}</div>
-                        <p className="mt-3 text-[11px] text-muted-foreground">{project.members.map((person) => person.name).join(', ')}</p>
+                        <SectionHeader compact title="Project team" />
+                        <ProjectMemberManager project={project} availableUsers={availableUsers} canManage={canManage} />
                     </section>
                 </aside>
             </div>}
@@ -222,22 +197,7 @@ export default function ProjectShow(props: ProjectShowProps) {
         <ProjectLinkDialog projectId={project.id} open={linkDialogOpen} link={editingLink} onOpenChange={setLinkDialogOpen} suggestions={props.linkCategories} />
         <ProjectFileDialog projectId={project.id} file={editingFile} suggestions={props.fileTagSuggestions} onOpenChange={(open) => { if (!open) setEditingFile(null); }} onDelete={(file) => { setEditingFile(null); setDeletingFile(file); }} />
         <ProjectFileDeleteDialog projectId={project.id} file={deletingFile} onClose={() => setDeletingFile(null)} />
-        <ProjectSettingsDialog project={project} open={settingsOpen} onOpenChange={setSettingsOpen} />
-        <Dialog open={membersOpen} onOpenChange={setMembersOpen}>
-            <DialogContent>
-                <DialogHeader><DialogTitle>Project members</DialogTitle></DialogHeader>
-                <p className="text-xs text-muted-foreground">Members can view the project, manage its files and links, and work with assigned tasks. Credentials are owner-only.</p>
-                <div className="max-h-80 space-y-1 overflow-y-auto">
-                    {availableUsers.map((person) => <label key={person.id} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-muted/50">
-                        <input type="checkbox" checked={memberIds.includes(person.id)} disabled={person.id === project.created_by}
-                            onChange={(event) => setMemberIds((current) => event.target.checked ? [...current, person.id] : current.filter((id) => id !== person.id))} />
-                        <Avatar user={person} /><span className="min-w-0 flex-1"><span className="block text-xs font-medium">{person.name}</span><span className="block truncate text-[11px] text-muted-foreground">{person.email}</span></span>
-                        {person.id === project.created_by && <span className="text-[10px] text-muted-foreground">Owner</span>}
-                    </label>)}
-                </div>
-                {Object.values(formErrors).length > 0 && <p className="text-xs text-red-600">{Object.values(formErrors)[0]}</p>}
-                <div className="flex justify-end gap-2"><button className={outlineButton} onClick={() => setMembersOpen(false)}>Cancel</button><button className={solidButton} disabled={formBusy} onClick={saveMembers}><Users className="size-4" /> Save members</button></div>
-            </DialogContent>
-        </Dialog>
+        <ProjectSettingsDialog project={project} availableUsers={availableUsers}
+            open={settingsOpen} onOpenChange={setSettingsOpen} />
     </AppLayout>;
 }

@@ -1,20 +1,22 @@
 import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
 import { AlignLeft, Activity, FolderKanban, Settings2, Trash2, ChevronDown } from 'lucide-react';
-import type { Project } from '@/types/project';
+import type { Person, Project } from '@/types/project';
 import { ProjectFormField, projectFieldInput } from './project-form-field';
 import { ProjectResponsiveDialog } from './project-responsive-dialog';
+import { ProjectMemberManager } from './project-member-manager';
 import { outlineButton, solidButton } from './resources';
 
 type Props = {
     project: Project;
+    availableUsers: Person[];
     open: boolean;
     onOpenChange: (value: boolean) => void;
 };
 
 const statuses: Project['status'][] = ['active', 'paused', 'archived'];
 
-export function ProjectSettingsDialog({ project, open, onOpenChange }: Props) {
+export function ProjectSettingsDialog({ project, availableUsers, open, onOpenChange }: Props) {
     const [name, setName] = useState(project.name);
     const [description, setDescription] = useState(project.description || '');
     const [status, setStatus] = useState<Project['status']>(project.status);
@@ -88,6 +90,11 @@ export function ProjectSettingsDialog({ project, open, onOpenChange }: Props) {
                 </select>
                 <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
             </ProjectFormField>
+
+            <div className="py-2">
+                <ProjectMemberManager project={project} availableUsers={availableUsers}
+                    canManage variant="settings" />
+            </div>
 
             {errors.general && <p role="alert" className="text-xs text-red-500">{errors.general}</p>}
 
