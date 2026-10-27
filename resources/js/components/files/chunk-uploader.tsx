@@ -327,7 +327,7 @@ export const ChunkUploader = forwardRef<ChunkUploaderHandle, Props>(
                             {inline ? '+ Attach' : dragging ? 'Drop files to upload' : 'Drop files or choose files'}
                         </span>
                         {!inline && <span className="mt-0.5 block text-[10px] text-muted-foreground">
-                            256 KB chunks · up to 1 GB per file
+                            Up to 1 GB per file
                         </span>}
                     </span>
                 </button>
