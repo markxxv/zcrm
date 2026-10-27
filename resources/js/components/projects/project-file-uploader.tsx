@@ -169,8 +169,6 @@ export const ProjectFileUploader = forwardRef<ProjectFileUploaderHandle, Props>(
                         // Preserve the active Main/Files tab and any unsaved filters.
                         router.reload({
                             only: ['recentFiles', 'files', 'counts'],
-                            preserveScroll: true,
-                            preserveState: true,
                         });
                     } else {
                         setIssues([{ title: 'Unexpected server response', detail: 'Verify that the latest CRM backend has been deployed.' }]);
