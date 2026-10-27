@@ -10,7 +10,7 @@ import { useState } from 'react';
 interface TasksPageProps {
   tasks: TaskGroup;
   selectedDate: string;
-  availableUsers: Array<{ id: number; name: string; email: string }>;
+  availableUsers: Array<{ id: number; name: string; email: string; avatar: string | null }>;
   availableProjects: TaskProject[];
 }
 

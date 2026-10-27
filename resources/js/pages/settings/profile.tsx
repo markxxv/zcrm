@@ -5,6 +5,7 @@ import { Transition } from '@headlessui/react';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 
 import DeleteUser from '@/components/delete-user';
+import { AvatarSettings } from '@/components/settings/avatar-settings';
 import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -37,7 +38,8 @@ export default function Profile({
             <h1 className="sr-only">Profile Settings</h1>
 
             <SettingsLayout>
-                <div className="space-y-6">
+                <div className="space-y-7">
+                    <AvatarSettings user={auth.user} />
                     <HeadingSmall
                         title="Profile information"
                         description="Update your name and email address"
