@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TaskEditor } from './task-editor';
+import { TaskAttachments } from './task-attachments';
 import { PrioritySelector } from './priority-selector';
 import { ProjectSelector } from './project-selector';
 import type { TaskProject } from '@/types/task';
@@ -158,6 +159,9 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
                   placeholder="Add a description..."
                 />
               </div>
+
+              {/* Compact inline files and links, shared between Tasks and Projects. */}
+              <TaskAttachments key={task.id} taskId={task.id} />
 
               {/* Due Date */}
               <div className="space-y-2">
