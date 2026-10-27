@@ -171,14 +171,77 @@
     .task-rich-editor .tiptap ol { list-style-type: decimal; padding-left: 1.5rem; }
     .task-rich-editor .tiptap li { margin: .2rem 0; }
     .task-rich-editor .tiptap li p { margin: 0; }
-    .task-rich-editor .tiptap ul[data-type="taskList"] { list-style: none; padding: 0; }
+    .task-rich-editor .tiptap ul[data-type="taskList"] {
+        list-style: none;
+        padding: 0;
+        margin: .65rem 0;
+    }
     .task-rich-editor .tiptap ul[data-type="taskList"] > li {
         display: flex;
         align-items: flex-start;
-        gap: .65rem;
+        gap: .7rem;
+        margin: .45rem 0;
     }
-    .task-rich-editor .tiptap ul[data-type="taskList"] > li > label { padding-top: .2rem; }
-    .task-rich-editor .tiptap ul[data-type="taskList"] > li > div { flex: 1; }
+    .task-rich-editor .tiptap ul[data-type="taskList"] > li > label {
+        display: grid;
+        flex: none;
+        place-items: center;
+        width: 1.5rem;
+        height: 1.5rem;
+        margin-top: .05rem;
+        padding: 0;
+        cursor: pointer;
+    }
+    .task-rich-editor .tiptap ul[data-type="taskList"] > li > label > input[type="checkbox"] {
+        appearance: none;
+        position: relative;
+        display: block;
+        flex: none;
+        width: 1.25rem;
+        height: 1.25rem;
+        margin: 0;
+        border: 1.5px solid #a1a1aa;
+        border-radius: 9999px;
+        background: transparent;
+        cursor: pointer;
+        transition: background-color .15s ease, border-color .15s ease;
+    }
+    .dark .task-rich-editor .tiptap ul[data-type="taskList"] > li > label > input[type="checkbox"] {
+        border-color: #71717a;
+    }
+    .task-rich-editor .tiptap ul[data-type="taskList"] > li > label > input[type="checkbox"]:hover {
+        border-color: #16a34a;
+    }
+    .task-rich-editor .tiptap ul[data-type="taskList"] > li > label > input[type="checkbox"]:checked {
+        border-color: #16a34a;
+        background: #16a34a;
+    }
+    .task-rich-editor .tiptap ul[data-type="taskList"] > li > label > input[type="checkbox"]:checked:hover {
+        border-color: #15803d;
+        background: #15803d;
+    }
+    .task-rich-editor .tiptap ul[data-type="taskList"] > li > label > input[type="checkbox"]:checked::after {
+        content: '';
+        position: absolute;
+        top: .18rem;
+        left: .38rem;
+        width: .3rem;
+        height: .55rem;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+    .task-rich-editor .tiptap ul[data-type="taskList"] > li > label > input[type="checkbox"]:focus-visible {
+        outline: 2px solid #22c55e;
+        outline-offset: 3px;
+    }
+    .task-rich-editor .tiptap ul[data-type="taskList"] > li > div {
+        min-width: 0;
+        flex: 1;
+    }
+    .task-rich-editor .tiptap ul[data-type="taskList"] > li[data-checked="true"] > div {
+        opacity: .75;
+    }
     .task-rich-editor .tiptap blockquote {
         padding: .5rem 1rem;
         border-left: 2px solid var(--muted-foreground);
