@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Task extends Model
 {
@@ -23,6 +25,25 @@ class Task extends Model
     public function projects(): BelongsToMany
     {
         return $this->belongsToMany(Project::class, 'project_task')->withTimestamps();
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(TaskFile::class);
+    }
+
+    public function links(): HasMany
+    {
+        return $this->hasMany(TaskLink::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (self $task): void {
+            foreach ($task->files as $file) {
+                Storage::disk($file->disk)->delete($file->path);
+            }
+        });
     }
 
     public function scopeDueToday($query)

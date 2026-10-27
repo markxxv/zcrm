@@ -5,6 +5,9 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectFileController;
 use App\Http\Controllers\ProjectLinkController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TaskAttachmentController;
+use App\Http\Controllers\TaskFileController;
+use App\Http\Controllers\TaskLinkController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -17,6 +20,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
 
     Route::match(['get', 'post', 'patch', 'delete'], '/tasks', [TaskController::class, 'index'])->name('tasks.index');
+
+    Route::get('/tasks/{task}/attachments', [TaskAttachmentController::class, 'index'])->name('tasks.attachments.index');
+    Route::post('/tasks/{task}/files', [TaskFileController::class, 'store'])->name('tasks.files.store');
+    Route::patch('/tasks/{task}/files/{file}', [TaskFileController::class, 'update'])->name('tasks.files.update');
+    Route::get('/tasks/{task}/files/{file}/download', [TaskFileController::class, 'download'])->name('tasks.files.download');
+    Route::delete('/tasks/{task}/files/{file}', [TaskFileController::class, 'destroy'])->name('tasks.files.destroy');
+    Route::post('/tasks/{task}/links', [TaskLinkController::class, 'store'])->name('tasks.links.store');
+    Route::patch('/tasks/{task}/links/{link}', [TaskLinkController::class, 'update'])->name('tasks.links.update');
+    Route::delete('/tasks/{task}/links/{link}', [TaskLinkController::class, 'destroy'])->name('tasks.links.destroy');
 
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
