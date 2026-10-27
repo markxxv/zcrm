@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\ProjectFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Support\FileThumbnail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
@@ -85,6 +86,14 @@ class ProjectFileController extends Controller
         ]);
 
         return back();
+    }
+
+    public function thumbnail(Project $project, ProjectFile $file)
+    {
+        $this->authorize('view', $project);
+        abort_unless($file->project_id === $project->id, 404);
+
+        return FileThumbnail::response($file);
     }
 
     public function download(Project $project, ProjectFile $file)

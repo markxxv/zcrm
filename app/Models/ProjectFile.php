@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Support\FileThumbnail;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProjectFile extends Model
@@ -14,6 +15,13 @@ class ProjectFile extends Model
     protected function casts(): array
     {
         return ['tags' => 'array'];
+    }
+
+    protected static function booted(): void
+    {
+        static::deleted(function (self $file): void {
+            FileThumbnail::purge($file);
+        });
     }
 
     public function project(): BelongsTo

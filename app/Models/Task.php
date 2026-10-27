@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use App\Support\FileThumbnail;
 
 class Task extends Model
 {
@@ -42,6 +43,7 @@ class Task extends Model
         static::deleting(function (self $task): void {
             foreach ($task->files as $file) {
                 Storage::disk($file->disk)->delete($file->path);
+                FileThumbnail::purge($file);
             }
         });
     }

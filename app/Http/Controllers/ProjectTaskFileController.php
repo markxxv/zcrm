@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\TaskFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Support\FileThumbnail;
 
 class ProjectTaskFileController extends Controller
 {
@@ -17,6 +18,13 @@ class ProjectTaskFileController extends Controller
             $project->tasks()->whereKey($file->task_id)->exists(),
             404
         );
+    }
+
+    public function thumbnail(Project $project, TaskFile $file)
+    {
+        $this->checkProject($project, $file);
+
+        return FileThumbnail::response($file);
     }
 
     public function download(Project $project, TaskFile $file)

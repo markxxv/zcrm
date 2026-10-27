@@ -6,6 +6,7 @@ use App\Models\Task;
 use App\Models\TaskFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Support\FileThumbnail;
 use Illuminate\Support\Str;
 
 class TaskFileController extends Controller
@@ -56,6 +57,14 @@ class TaskFileController extends Controller
         $file->update($data);
 
         return response()->json(['file' => $file]);
+    }
+
+    public function thumbnail(Task $task, TaskFile $file)
+    {
+        $this->authorize('update', $task);
+        abort_unless($file->task_id === $task->id, 404);
+
+        return FileThumbnail::response($file);
     }
 
     public function download(Task $task, TaskFile $file)

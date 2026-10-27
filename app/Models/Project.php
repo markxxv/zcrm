@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use App\Support\FileThumbnail;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +12,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Project extends Model
 {
     protected $fillable = ['name', 'description', 'status', 'created_by'];
+
+    protected static function booted(): void
+    {
+        static::deleting(function (self $project): void {
+            foreach ($project->files as $file) {
+                Storage::disk($file->disk)->delete($file->path);
+                FileThumbnail::purge($file);
+            }
+        });
+    }
 
     public function owner(): BelongsTo
     {

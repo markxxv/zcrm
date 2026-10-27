@@ -36,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/tasks/{task}/files', [TaskFileController::class, 'store'])->name('tasks.files.store');
     Route::patch('/tasks/{task}/files/{file}', [TaskFileController::class, 'update'])->name('tasks.files.update');
     Route::get('/tasks/{task}/files/{file}/download', [TaskFileController::class, 'download'])->name('tasks.files.download');
+    Route::get('/tasks/{task}/files/{file}/thumbnail', [TaskFileController::class, 'thumbnail'])->name('tasks.files.thumbnail');
     Route::delete('/tasks/{task}/files/{file}', [TaskFileController::class, 'destroy'])->name('tasks.files.destroy');
     Route::post('/tasks/{task}/links', [TaskLinkController::class, 'store'])->name('tasks.links.store');
     Route::patch('/tasks/{task}/links/{link}', [TaskLinkController::class, 'update'])->name('tasks.links.update');
@@ -55,9 +56,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/projects/{project}/files', [ProjectFileController::class, 'store'])->name('projects.files.store');
     Route::patch('/projects/{project}/files/{file}', [ProjectFileController::class, 'update'])->name('projects.files.update');
     Route::get('/projects/{project}/files/{file}/download', [ProjectFileController::class, 'download'])->name('projects.files.download');
+    Route::get('/projects/{project}/files/{file}/thumbnail', [ProjectFileController::class, 'thumbnail'])->name('projects.files.thumbnail');
     Route::delete('/projects/{project}/files/{file}', [ProjectFileController::class, 'destroy'])->name('projects.files.destroy');
 
     Route::get('/projects/{project}/task-files/{file}/download', [ProjectTaskFileController::class, 'download'])->name('projects.task-files.download');
+    Route::get('/projects/{project}/task-files/{file}/thumbnail', [ProjectTaskFileController::class, 'thumbnail'])->name('projects.task-files.thumbnail');
     Route::patch('/projects/{project}/task-files/{file}', [ProjectTaskFileController::class, 'update'])->name('projects.task-files.update');
     Route::delete('/projects/{project}/task-files/{file}', [ProjectTaskFileController::class, 'destroy'])->name('projects.task-files.destroy');
 
