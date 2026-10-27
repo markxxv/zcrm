@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ArrowUpRight, FolderKanban, Plus, Users, CheckCheck, HardDrive } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-type Item = { id: number; name: string; description: string | null; status: string; created_by: number; members_count: number; tasks_count: number; files_size_bytes: number | string | null };
+type Item = { id: number; name: string; description: string | null; status: string; created_by: number; members_count: number; tasks_count: number; files_size_bytes: number | string | null; task_files_size_bytes: number | string | null };
 type Props = { projects: Item[] };
 const field = 'w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40';
 
@@ -47,7 +47,7 @@ export default function ProjectsIndex({ projects }: Props) {
                             <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1.5"><Users className="size-3.5" /> {project.members_count} members</span>
                                 <span className="flex items-center gap-1.5"><CheckCheck className="size-3.5" /> {project.tasks_count} tasks</span>
-                                <span className="flex items-center gap-1.5" title="Total uploaded project files"><HardDrive className="size-3.5" /> {(Number(project.files_size_bytes ?? 0) / 1048576).toFixed(2)} MB</span>
+                                <span className="flex items-center gap-1.5" title="Project files + attachments of linked tasks"><HardDrive className="size-3.5" /> {((Number(project.files_size_bytes ?? 0) + Number(project.task_files_size_bytes ?? 0)) / 1048576).toFixed(2)} MB</span>
                                 <span className="ml-auto capitalize">{project.status}</span>
                             </div>
                         </Link>

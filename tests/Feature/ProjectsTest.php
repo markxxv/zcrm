@@ -70,13 +70,46 @@ class ProjectsTest extends TestCase
             'uploaded_by' => $user->id,
         ]);
 
+        // A shared task contributes to both projects, while a project-only
+        // task contributes to just one. Each attachment is counted once
+        // within each project's total.
+        $shared = Task::create([
+            'title' => 'Shared work',
+            'priority' => 'medium',
+            'due_date' => today()->toDateString(),
+        ]);
+        $shared->projects()->attach([$first->id, $second->id]);
+        $shared->files()->create([
+            'name' => 'shared.pdf',
+            'path' => 'tasks/'.$shared->id.'/shared.pdf',
+            'disk' => 'local',
+            'size' => 262144,
+            'uploaded_by' => $user->id,
+        ]);
+
+        $firstOnly = Task::create([
+            'title' => 'Only Alpha',
+            'priority' => 'low',
+            'due_date' => today()->toDateString(),
+        ]);
+        $firstOnly->projects()->attach($first->id);
+        $firstOnly->files()->create([
+            'name' => 'alpha.pdf',
+            'path' => 'tasks/'.$firstOnly->id.'/alpha.pdf',
+            'disk' => 'local',
+            'size' => 524288,
+            'uploaded_by' => $user->id,
+        ]);
+
         $this->actingAs($user)->get('/projects')
             ->assertOk()
             ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
                 ->component('projects/index')
                 ->has('projects', 2)
                 ->where('projects.0.files_size_bytes', 1572864)
+                ->where('projects.0.task_files_size_bytes', 786432)
                 ->where('projects.1.files_size_bytes', null)
+                ->where('projects.1.task_files_size_bytes', 262144)
                 ->etc());
     }
 

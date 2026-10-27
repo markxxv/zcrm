@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\TaskFile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,12 @@ class ProjectController extends Controller
                 ->select(['id', 'name', 'description', 'status', 'created_by'])
                 ->withCount(['members', 'tasks'])
                 ->withSum('files as files_size_bytes', 'size')
+                ->addSelect([
+                    'task_files_size_bytes' => TaskFile::query()
+                        ->selectRaw('COALESCE(SUM(task_files.size), 0)')
+                        ->join('project_task', 'project_task.task_id', '=', 'task_files.task_id')
+                        ->whereColumn('project_task.project_id', 'projects.id'),
+                ])
                 ->orderBy('name')->get(),
         ]);
     }
