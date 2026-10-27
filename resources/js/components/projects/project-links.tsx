@@ -5,9 +5,9 @@ import { ProjectLinkDialog } from './project-link-dialog';
 import type { Filters, Page, ProjectLink } from '@/types/project';
 import { ServiceIcon, SectionHeader, Paginator, ResourceSearch, FilterSelect, mutedButton, solidButton, domain, displayDate, useResourceFilters } from './resources';
 
-type Props = { projectId: number; page: Page<ProjectLink> | null; filters: Filters };
+type Props = { projectId: number; page: Page<ProjectLink> | null; filters: Filters; suggestions: string[] };
 
-export function ProjectLinks({ projectId, page, filters }: Props) {
+export function ProjectLinks({ projectId, page, filters, suggestions }: Props) {
     const { query, setQuery, setFilter } = useResourceFilters(projectId, filters);
     const [opened, setOpened] = useState(false);
     const [active, setActive] = useState<ProjectLink | null>(null);
@@ -34,6 +34,6 @@ export function ProjectLinks({ projectId, page, filters }: Props) {
             </div>)}
         </div> : <div className="py-24 text-center text-xs text-muted-foreground">No links found.</div>}
         <Paginator page={page} />
-        <ProjectLinkDialog projectId={projectId} open={opened} link={active} onOpenChange={setOpened} />
+        <ProjectLinkDialog projectId={projectId} open={opened} link={active} onOpenChange={setOpened} suggestions={suggestions} />
     </>;
 }

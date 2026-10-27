@@ -44,6 +44,8 @@ export interface ProjectShowProps {
     availableProjects: TaskProject[];
     counts: { files: number; links: number };
     filters: Filters;
+    linkCategories: string[];
+    fileTagSuggestions: string[];
     canManage: boolean;
     canAccessVault: boolean;
 }

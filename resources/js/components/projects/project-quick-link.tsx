@@ -7,13 +7,13 @@ import { ProjectLinkForm } from './project-link-form';
 import { mutedButton } from './resources';
 
 /** Anchored on desktop, native-feeling bottom drawer on phones. */
-export function ProjectQuickLink({ projectId }: { projectId: number }) {
+export function ProjectQuickLink({ projectId, suggestions = [] }: { projectId: number; suggestions?: string[] }) {
     const isMobile = useIsMobile();
     const [open, setOpen] = useState(false);
     const trigger = <button type="button" className={mutedButton + ' mt-3'} aria-label="Add project link">
         <Plus className="size-4" /> Add link
     </button>;
-    const editor = open ? <ProjectLinkForm key={projectId} projectId={projectId} compact onClose={() => setOpen(false)} /> : null;
+    const editor = open ? <ProjectLinkForm key={projectId} projectId={projectId} compact suggestions={suggestions} onClose={() => setOpen(false)} /> : null;
 
     if (isMobile) {
         return <Drawer open={open} onOpenChange={setOpen} direction="bottom">

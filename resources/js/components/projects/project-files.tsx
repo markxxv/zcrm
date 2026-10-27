@@ -8,8 +8,8 @@ import { UserAvatar } from '@/components/user-avatar';
 import type { Filters, Page, ProjectFile } from '@/types/project';
 import { AttachmentIcon, SectionHeader, Paginator, ResourceSearch, FilterSelect, mutedButton, outlineButton, solidButton, bytes, displayDate, useResourceFilters, fileDownloadUrl } from './resources';
 
-type Props = { projectId: number; page: Page<ProjectFile> | null; filters: Filters };
-export function ProjectFiles({ projectId, page, filters }: Props) {
+type Props = { projectId: number; page: Page<ProjectFile> | null; filters: Filters; suggestions: string[] };
+export function ProjectFiles({ projectId, page, filters, suggestions }: Props) {
     const { query, setQuery, setFilter } = useResourceFilters(projectId, filters);
     const [grid, setGrid] = useState(false);
     const [selected, setSelected] = useState<ProjectFile | null>(null);
@@ -47,7 +47,7 @@ export function ProjectFiles({ projectId, page, filters }: Props) {
                 canEdit={canEdit(file)} onEdit={edit} onDelete={setDeleting} />)}
         </div> : <div className="py-24 text-center text-xs text-muted-foreground">No matching files.</div>}
         <Paginator page={page} />
-        <ProjectFileDialog projectId={projectId} file={selected} onOpenChange={(open) => { if (!open) setSelected(null); }} onDelete={(file) => { setSelected(null); setDeleting(file); }} />
+        <ProjectFileDialog projectId={projectId} file={selected} suggestions={suggestions} onOpenChange={(open) => { if (!open) setSelected(null); }} onDelete={(file) => { setSelected(null); setDeleting(file); }} />
         <ProjectFileDeleteDialog projectId={projectId} file={deleting} onClose={() => setDeleting(null)} />
     </>;
 }

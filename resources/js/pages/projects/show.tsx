@@ -181,7 +181,7 @@ export default function ProjectShow(props: ProjectShowProps) {
                                 </button>
                             </div>
                         ) : <p className="py-5 text-xs text-muted-foreground">No pinned links yet.</p>}</div>
-                        <ProjectQuickLink projectId={project.id} />
+                        <ProjectQuickLink projectId={project.id} suggestions={props.linkCategories} />
                     </section>
                     <section>
                         <SectionHeader compact title="Recent files" action={<button className={mutedButton} onClick={() => changeTab('files')}>All files <ArrowUpRight className="size-4" /></button>} />
@@ -210,8 +210,8 @@ export default function ProjectShow(props: ProjectShowProps) {
                 </aside>
             </div>}
 
-            {filters.tab === 'files' && <ProjectFiles projectId={project.id} page={props.files} filters={filters} />}
-            {filters.tab === 'links' && <ProjectLinks projectId={project.id} page={props.links} filters={filters} />}
+            {filters.tab === 'files' && <ProjectFiles projectId={project.id} page={props.files} filters={filters} suggestions={props.fileTagSuggestions} />}
+            {filters.tab === 'links' && <ProjectLinks projectId={project.id} page={props.links} filters={filters} suggestions={props.linkCategories} />}
             {filters.tab === 'access' && <ProjectAccessTab projectId={project.id} page={props.accesses} filters={filters} canAccessVault={canAccessVault} />}
         </div>
 
@@ -219,8 +219,8 @@ export default function ProjectShow(props: ProjectShowProps) {
             availableUsers={availableUsers} availableProjects={availableProjects}
             onFilesChanged={() => router.reload({ only: ['recentFiles', 'files', 'counts'] })} />
 
-        <ProjectLinkDialog projectId={project.id} open={linkDialogOpen} link={editingLink} onOpenChange={setLinkDialogOpen} />
-        <ProjectFileDialog projectId={project.id} file={editingFile} onOpenChange={(open) => { if (!open) setEditingFile(null); }} onDelete={(file) => { setEditingFile(null); setDeletingFile(file); }} />
+        <ProjectLinkDialog projectId={project.id} open={linkDialogOpen} link={editingLink} onOpenChange={setLinkDialogOpen} suggestions={props.linkCategories} />
+        <ProjectFileDialog projectId={project.id} file={editingFile} suggestions={props.fileTagSuggestions} onOpenChange={(open) => { if (!open) setEditingFile(null); }} onDelete={(file) => { setEditingFile(null); setDeletingFile(file); }} />
         <ProjectFileDeleteDialog projectId={project.id} file={deletingFile} onClose={() => setDeletingFile(null)} />
         <ProjectSettingsDialog project={project} open={settingsOpen} onOpenChange={setSettingsOpen} />
         <Dialog open={membersOpen} onOpenChange={setMembersOpen}>

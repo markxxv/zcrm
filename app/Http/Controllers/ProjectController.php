@@ -140,6 +140,13 @@ class ProjectController extends Controller
             'availableProjects' => Project::query()
                 ->whereHas('members', fn ($query) => $query->whereKey($request->user()->id))
                 ->orderBy('name')->get(['id', 'name']),
+            'linkCategories' => $project->links()->whereNotNull('category')
+                ->where('category', '!=', '')->distinct()->orderBy('category')
+                ->limit(100)->pluck('category')->all(),
+            'fileTagSuggestions' => $project->files()->latest()->limit(500)->get(['tags'])
+                ->flatMap(fn ($file) => $file->tags ?? [])
+                ->unique(fn ($tag) => mb_strtolower($tag))
+                ->sort()->values()->all(),
             'canManage' => $request->user()->can('update', $project),
             'canAccessVault' => $canAccess,
             'filters' => ['tab' => $tab, 'q' => $q, 'type' => $type, 'sort' => $sort],
