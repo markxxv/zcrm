@@ -70,6 +70,7 @@ export function TaskItem({ task, onToggleComplete, onOpenDrawer, onMoveToTomorro
           )}>
             {task.title}
           </p>
+          {task.projects?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{task.projects.map(project => <span key={project.id} className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{project.name}</span>)}</div>}
         </div>
 
         {/* Actions dropdown */}

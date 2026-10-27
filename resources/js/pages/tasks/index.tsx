@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { Task, TaskGroup } from '@/types/task';
+import { Task, TaskGroup, TaskProject } from '@/types/task';
 import { DatePickerHorizontal } from '@/components/tasks/date-picker-horizontal';
 import { TaskList } from '@/components/tasks/task-list';
 import { TaskInput } from '@/components/tasks/task-input';
@@ -11,9 +11,10 @@ interface TasksPageProps {
   tasks: TaskGroup;
   selectedDate: string;
   availableUsers: Array<{ id: number; name: string; email: string }>;
+  availableProjects: TaskProject[];
 }
 
-export default function TasksIndex({ tasks, selectedDate, availableUsers }: TasksPageProps) {
+export default function TasksIndex({ tasks, selectedDate, availableUsers, availableProjects }: TasksPageProps) {
   const currentTasks = tasks.current || [];
   const pastTasks = tasks.past || [];
   const [openDrawer, setOpenDrawer] = useState<Task | null>(null);
@@ -131,6 +132,7 @@ export default function TasksIndex({ tasks, selectedDate, availableUsers }: Task
             open={openDrawer !== null}
             onOpenChange={(open) => !open && setOpenDrawer(null)}
             availableUsers={availableUsers}
+            availableProjects={availableProjects}
           />
 
 

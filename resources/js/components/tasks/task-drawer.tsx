@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TaskEditor } from './task-editor';
 import { PrioritySelector } from './priority-selector';
+import { ProjectSelector } from './project-selector';
+import type { TaskProject } from '@/types/task';
 import { UserAssignment } from './user-assignment';
 import { Task } from '@/types/task';
 import { X, Trash2 } from 'lucide-react';
@@ -21,9 +23,10 @@ interface TaskDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   availableUsers: Array<{ id: number; name: string; email: string }>;
+  availableProjects: TaskProject[];
 }
 
-export function TaskDrawer({ task, open, onOpenChange, availableUsers }: TaskDrawerProps) {
+export function TaskDrawer({ task, open, onOpenChange, availableUsers, availableProjects }: TaskDrawerProps) {
   const { data, setData, patch, delete: destroy, processing, reset } = useForm({
     task_id: 0,
     title: '',
@@ -31,6 +34,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers }: TaskDra
     priority: 'medium' as const,
     due_date: '',
     assigned_user_ids: [] as number[],
+    project_ids: [] as number[],
   });
 
   useEffect(() => {
@@ -42,9 +46,10 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers }: TaskDra
         priority: task.priority,
         due_date: task.due_date,
         assigned_user_ids: task.assigned_users.map(u => u.id),
+        project_ids: (task.projects || []).filter(p => availableProjects.some(available => available.id === p.id)).map(p => p.id),
       });
     }
-  }, [task]);
+  }, [task, availableProjects]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +99,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers }: TaskDra
           </DrawerDescription>
           <DrawerClose asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
-              <X className="h-4w-4" />
+              <X className="h-4 w-4" />
             </Button>
           </DrawerClose>
         </div>
@@ -124,6 +129,13 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers }: TaskDra
                   disabled={processing}
                 />
               </div>
+
+              <ProjectSelector
+                projects={availableProjects}
+                value={data.project_ids}
+                onChange={(ids) => setData('project_ids', ids)}
+                disabled={processing}
+              />
 
               {/* Assigned Users */}
               <div className="space-y-2 flex gap-4 items-center">
