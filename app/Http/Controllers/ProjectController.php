@@ -16,8 +16,10 @@ class ProjectController extends Controller
         return Inertia::render('projects/index', [
             'projects' => Project::query()
                 ->whereHas('members', fn ($q) => $q->whereKey($request->user()->id))
+                ->select(['id', 'name', 'description', 'status', 'created_by'])
                 ->withCount(['members', 'tasks'])
-                ->orderBy('name')->get(['id', 'name', 'description', 'status', 'created_by']),
+                ->withSum('files as files_size_bytes', 'size')
+                ->orderBy('name')->get(),
         ]);
     }
 

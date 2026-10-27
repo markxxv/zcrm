@@ -45,6 +45,41 @@ class ProjectsTest extends TestCase
         $this->assertTrue($project->members()->whereKey($owner->id)->exists());
     }
 
+    public function test_project_index_includes_uploaded_file_storage_in_bytes(): void
+    {
+        $user = User::factory()->create();
+        $first = $this->project($user);
+        $first->update(['name' => 'Alpha']);
+        $second = $this->project($user);
+        $second->update(['name' => 'Beta']);
+
+        $first->files()->create([
+            'name' => 'one.pdf',
+            'path' => 'projects/'.$first->id.'/one.pdf',
+            'disk' => 'local',
+            'extension' => 'pdf',
+            'size' => 1048576,
+            'uploaded_by' => $user->id,
+        ]);
+        $first->files()->create([
+            'name' => 'two.pdf',
+            'path' => 'projects/'.$first->id.'/two.pdf',
+            'disk' => 'local',
+            'extension' => 'pdf',
+            'size' => 524288,
+            'uploaded_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)->get('/projects')
+            ->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('projects/index')
+                ->has('projects', 2)
+                ->where('projects.0.files_size_bytes', 1572864)
+                ->where('projects.1.files_size_bytes', null)
+                ->etc());
+    }
+
     public function test_non_members_cannot_read_or_modify_projects(): void
     {
         $owner = User::factory()->create();

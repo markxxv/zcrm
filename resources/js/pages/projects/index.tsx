@@ -1,10 +1,10 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { ArrowUpRight, FolderKanban, Plus, Users, CheckCheck } from 'lucide-react';
+import { ArrowUpRight, FolderKanban, Plus, Users, CheckCheck, HardDrive } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-type Item = { id: number; name: string; description: string | null; status: string; created_by: number; members_count: number; tasks_count: number };
+type Item = { id: number; name: string; description: string | null; status: string; created_by: number; members_count: number; tasks_count: number; files_size_bytes: number | string | null };
 type Props = { projects: Item[] };
 const field = 'w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40';
 
@@ -44,9 +44,10 @@ export default function ProjectsIndex({ projects }: Props) {
                             </div>
                             <h2 className="mt-7 text-xl font-medium tracking-tight">{project.name}</h2>
                             <p className="mt-2 line-clamp-2 flex-1 text-xs text-muted-foreground">{project.description || 'No description'}</p>
-                            <div className="mt-7 flex gap-5 text-xs text-muted-foreground">
+                            <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1.5"><Users className="size-3.5" /> {project.members_count} members</span>
                                 <span className="flex items-center gap-1.5"><CheckCheck className="size-3.5" /> {project.tasks_count} tasks</span>
+                                <span className="flex items-center gap-1.5" title="Total uploaded project files"><HardDrive className="size-3.5" /> {(Number(project.files_size_bytes ?? 0) / 1048576).toFixed(2)} MB</span>
                                 <span className="ml-auto capitalize">{project.status}</span>
                             </div>
                         </Link>
