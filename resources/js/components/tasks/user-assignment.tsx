@@ -14,11 +14,13 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
+import { UserAvatar } from '@/components/user-avatar';
 
 interface User {
   id: number;
   name: string;
   email: string;
+  avatar?: string | null;
 }
 
 interface UserAssignmentProps {
@@ -38,15 +40,6 @@ export function UserAssignment({
 }: UserAssignmentProps) {
   const [open, setOpen] = useState(false);
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   const unassignedUsers = availableUsers.filter(
     (user) => !assignedUsers.find((assigned) => assigned.id === user.id)
   );
@@ -65,9 +58,7 @@ export function UserAssignment({
             key={user.id}
             className="group flex items-center gap-2 rounded-full bg-accent pl-1 pr-3 py-1 transition-all duration-200 hover:bg-accent/80"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-[11px] font-semibold text-white">
-              {getInitials(user.name)}
-            </div>
+            <UserAvatar user={user} className="size-7" />
             <span className="text-sm font-medium">{user.name}</span>
             {!disabled && assignedUsers.length > 1 && (
                 <button type="button"
@@ -107,9 +98,7 @@ export function UserAssignment({
                         onSelect={() => handleAssign(user.id)}
                       >
                         <div className="flex items-center gap-3 flex-1">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-[11px] font-semibold text-white">
-                            {getInitials(user.name)}
-                          </div>
+                          <UserAvatar user={user} className="size-8" />
                           <div className="flex flex-col">
                             <span className="text-sm font-medium">{user.name}</span>
                             <span className="text-xs text-muted-foreground">{user.email}</span>

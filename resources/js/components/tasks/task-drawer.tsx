@@ -22,7 +22,7 @@ interface TaskDrawerProps {
   task: Task | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  availableUsers: Array<{ id: number; name: string; email: string }>;
+  availableUsers: Array<{ id: number; name: string; email: string; avatar: string | null }>;
   availableProjects: TaskProject[];
 }
 

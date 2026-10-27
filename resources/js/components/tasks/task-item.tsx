@@ -2,6 +2,7 @@ import { Task } from '@/types/task';
 import { Check, Circle, MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TaskActionsDropdown } from './task-actions-dropdown';
+import { UserAvatar } from '@/components/user-avatar';
 
 interface TaskItemProps {
   task: Task;
@@ -72,6 +73,14 @@ export function TaskItem({ task, onToggleComplete, onOpenDrawer, onMoveToTomorro
           </p>
           {task.projects?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{task.projects.map(project => <span key={project.id} className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{project.name}</span>)}</div>}
         </div>
+
+        {task.assigned_users?.length > 0 && (
+          <div className="hidden shrink-0 -space-x-2 sm:flex" aria-label="Assigned users">
+            {task.assigned_users.slice(0, 3).map((user) => (
+              <UserAvatar key={user.id} user={user} className="size-7 ring-2 ring-background" />
+            ))}
+          </div>
+        )}
 
         {/* Actions dropdown */}
         <TaskActionsDropdown

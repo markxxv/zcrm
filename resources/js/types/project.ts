@@ -1,6 +1,6 @@
 import type { Task, TaskProject } from '@/types/task';
 
-export interface Person { id: number; name: string; email: string }
+export interface Person { id: number; name: string; email: string; avatar: string | null }
 export interface Project extends TaskProject {
     description: string | null;
     status: 'active' | 'paused' | 'archived';

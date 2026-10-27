@@ -3,6 +3,8 @@ import { Link, router } from '@inertiajs/react';
 import { FileText, Table2, Presentation, HardDrive, Figma, Globe2, FileArchive, FileImage, File, FileSpreadsheet, Search, ChevronDown } from 'lucide-react';
 import type { Filters, Page, ProjectFile, ProjectLink } from '@/types/project';
 import type { ReactNode } from 'react';
+import { UserAvatar } from '@/components/user-avatar';
+import type { Person } from '@/types/project';
 
 export const fieldClass = 'w-full rounded-lg border border-input bg-background px-3 py-2.5 text-xs outline-none focus:border-foreground/40';
 export const mutedButton = 'inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground';
@@ -44,8 +46,8 @@ export function displayDate(value: string) {
 export function domain(value: string) {
     try { return new URL(value).hostname.replace(/^www\./, ''); } catch { return value; }
 }
-export function Avatar({ name }: { name: string }) {
-    return <span title={name} className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground ring-2 ring-background">{name.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span>;
+export function Avatar({ user, className = '' }: { user: Person; className?: string }) {
+    return <UserAvatar user={user} className={'size-8 ring-2 ring-background ' + className} />;
 }
 export function SectionHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
     return <div className="mb-5 flex flex-wrap items-center justify-between gap-3">

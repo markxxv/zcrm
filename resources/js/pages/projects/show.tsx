@@ -142,7 +142,7 @@ export default function ProjectShow(props: ProjectShowProps) {
                 {canManage && <button className={outlineButton} onClick={settings}><Settings2 className="size-4" /> Edit project</button>}
             </div>
             <div className="mb-7 flex items-center gap-3">
-                <div className="flex -space-x-2">{project.members.slice(0, 6).map((person) => <Avatar key={person.id} name={person.name} />)}</div>
+                <div className="flex -space-x-2">{project.members.slice(0, 6).map((person) => <Avatar key={person.id} user={person} />)}</div>
                 {canManage && <button className="grid size-8 place-items-center rounded-full bg-muted/70 hover:bg-muted" title="Manage team" onClick={team}><Plus className="size-4 text-muted-foreground" /></button>}
                 <span className="text-[11px] text-muted-foreground">{project.members.length} project members</span>
             </div>
@@ -189,7 +189,7 @@ export default function ProjectShow(props: ProjectShowProps) {
                                     {task.projects.length > 1 && <span>· {task.projects.length} projects</span>}
                                 </span>
                             </button>
-                            <div className="hidden -space-x-2 sm:flex">{task.assigned_users.slice(0, 2).map((person: Person) => <Avatar key={person.id} name={person.name} />)}</div>
+                            <div className="hidden -space-x-2 sm:flex">{task.assigned_users.slice(0, 2).map((person: Person) => <Avatar key={person.id} user={person} />)}</div>
                             <button className={mutedButton} onClick={() => setTaskDrawer(task)} title="Edit task"><Pencil className="size-4" /></button>
                         </div>)}
                     </div> : <p className="py-16 text-center text-xs text-muted-foreground">No tasks in this view.</p>}
@@ -236,7 +236,7 @@ export default function ProjectShow(props: ProjectShowProps) {
                     </section>
                     <section>
                         <SectionHeader title="Project team" action={canManage && <button className={mutedButton} onClick={team}>Manage <ArrowUpRight className="size-4" /></button>} />
-                        <div className="flex -space-x-2">{project.members.map((person) => <Avatar key={person.id} name={person.name} />)}</div>
+                        <div className="flex -space-x-2">{project.members.map((person) => <Avatar key={person.id} user={person} />)}</div>
                         <p className="mt-3 text-[11px] text-muted-foreground">{project.members.map((person) => person.name).join(', ')}</p>
                     </section>
                 </aside>
@@ -272,7 +272,7 @@ export default function ProjectShow(props: ProjectShowProps) {
                     {availableUsers.map((person) => <label key={person.id} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-muted/50">
                         <input type="checkbox" checked={memberIds.includes(person.id)} disabled={person.id === project.created_by}
                             onChange={(event) => setMemberIds((current) => event.target.checked ? [...current, person.id] : current.filter((id) => id !== person.id))} />
-                        <Avatar name={person.name} /><span className="min-w-0 flex-1"><span className="block text-xs font-medium">{person.name}</span><span className="block truncate text-[11px] text-muted-foreground">{person.email}</span></span>
+                        <Avatar user={person} /><span className="min-w-0 flex-1"><span className="block text-xs font-medium">{person.name}</span><span className="block truncate text-[11px] text-muted-foreground">{person.email}</span></span>
                         {person.id === project.created_by && <span className="text-[10px] text-muted-foreground">Owner</span>}
                     </label>)}
                 </div>

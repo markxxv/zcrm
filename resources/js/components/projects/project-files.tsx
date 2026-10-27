@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { router } from '@inertiajs/react';
 import { FileUp, Grid2X2, List, Download, Pencil, UploadCloud } from 'lucide-react';
 import { ProjectFileDialog } from './project-file-dialog';
+import { UserAvatar } from '@/components/user-avatar';
 import type { Filters, Page, ProjectFile } from '@/types/project';
 import { AttachmentIcon, SectionHeader, Paginator, ResourceSearch, FilterSelect, mutedButton, outlineButton, solidButton, bytes, displayDate, useResourceFilters } from './resources';
 
@@ -50,13 +51,13 @@ export function ProjectFiles({ projectId, page, filters, userId, ownerId }: Prop
         {(page?.data || []).length ? grid ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {page?.data.map((file) => <div key={file.id} className="min-w-0 rounded-xl bg-muted/30 p-3">
                 <a href={download(file)} className="mb-3 grid h-28 place-items-center rounded-lg bg-muted/60"><AttachmentIcon file={file} /></a>
-                <p className="truncate text-xs font-medium" title={file.name}>{file.name}</p><p className="mt-1 text-[10px] text-muted-foreground">{bytes(file.size)} · {displayDate(file.created_at)}</p>
+                <p className="truncate text-xs font-medium" title={file.name}>{file.name}</p><div className="mt-2 flex items-center gap-1.5 text-[10px] text-muted-foreground">{file.uploader && <UserAvatar user={file.uploader} className="size-5" />}{bytes(file.size)} · {displayDate(file.created_at)}</div>
                 <div className="mt-3 flex justify-between"><a href={download(file)} className={mutedButton}><Download className="size-4" /></a>{canEdit(file) && <button className={mutedButton} onClick={() => edit(file)} aria-label="Edit file"><Pencil className="size-4" /></button>}</div>
             </div>)}
         </div> : <div className="divide-y divide-border/40">
             {page?.data.map((file) => <div key={file.id} className="group flex min-w-0 items-center gap-3 py-3.5">
-                <AttachmentIcon file={file} /><div className="min-w-0 flex-1"><p className="truncate text-xs font-medium">{file.name}</p><p className="mt-1 truncate text-[11px] text-muted-foreground">{(file.tags || []).join(', ') || (file.extension || 'File')} · {file.uploader?.name || 'Unknown'}</p></div>
-                <span className="hidden text-[11px] text-muted-foreground sm:block">{bytes(file.size)} · {displayDate(file.created_at)}</span>
+                <AttachmentIcon file={file} /><div className="min-w-0 flex-1"><p className="truncate text-xs font-medium">{file.name}</p><p className="mt-1 truncate text-[11px] text-muted-foreground">{(file.tags || []).join(', ') || (file.extension || 'File')}</p></div>
+                <span className="hidden items-center gap-2 text-[11px] text-muted-foreground sm:flex">{file.uploader && <UserAvatar user={file.uploader} className="size-6" />}<span>{bytes(file.size)} · {displayDate(file.created_at)}</span></span>
                 <a href={download(file)} className={mutedButton} title="Download"><Download className="size-4" /></a>
                 {canEdit(file) && <button className={mutedButton} onClick={() => edit(file)} aria-label="Edit file"><Pencil className="size-4" /></button>}
             </div>)}

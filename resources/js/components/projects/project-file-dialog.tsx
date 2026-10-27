@@ -4,6 +4,7 @@ import { Download, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { ProjectFile } from '@/types/project';
 import { AttachmentIcon, bytes, fieldClass, mutedButton, outlineButton, solidButton } from './resources';
+import { UserAvatar } from '@/components/user-avatar';
 
 type Props = {
     projectId: number;
@@ -47,7 +48,7 @@ export function ProjectFileDialog({ projectId, file, onOpenChange }: Props) {
             {file && <div className="grid gap-4">
                 <div className="flex items-center gap-3">
                     <AttachmentIcon file={file} />
-                    <span className="text-xs text-muted-foreground">{bytes(file.size)} · uploaded by {file.uploader?.name || 'Unknown'}</span>
+                    <span className="flex items-center gap-2 text-xs text-muted-foreground">{bytes(file.size)} · uploaded by {file.uploader && <UserAvatar user={file.uploader} className="size-6" />}{file.uploader?.name || 'Unknown'}</span>
                 </div>
                 <label className="grid gap-2 text-xs">Filename<input className={fieldClass} value={filename} onChange={e => setFilename(e.target.value)} /></label>
                 <label className="grid gap-2 text-xs">Tags, separated by commas<input className={fieldClass} value={tags} onChange={e => setTags(e.target.value)} /></label>
