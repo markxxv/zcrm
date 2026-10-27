@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChunkUploader } from '@/components/files/chunk-uploader';
+import { FileTypeIcon } from '@/components/files/file-type-icon';
 import {
-    Check, ExternalLink, File, FileArchive, FileImage, FileText, Globe2,
+    Check, ExternalLink, File, FileText, Globe2,
     Link2, LoaderCircle, Paperclip, Pencil, Plus, Presentation, Table2,
     Trash2, X,
 } from 'lucide-react';
@@ -32,18 +33,6 @@ function fileSize(size: number): string {
     if (size < 1024) return size + ' B';
     if (size < 1024 * 1024) return Math.round(size / 1024) + ' KB';
     return (size / (1024 * 1024)).toFixed(1) + ' MB';
-}
-
-function FileIcon({ extension }: { extension: string | null }) {
-    const ext = (extension || '').toLowerCase();
-    if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'avif'].includes(ext)) {
-        return <FileImage className="size-3.5 shrink-0 text-blue-500" />;
-    }
-    if (ext === 'pdf') return <FileText className="size-3.5 shrink-0 text-red-500" />;
-    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
-        return <FileArchive className="size-3.5 shrink-0 text-purple-500" />;
-    }
-    return <File className="size-3.5 shrink-0 text-muted-foreground" />;
 }
 
 function LinkIcon({ kind }: { kind: TaskLink['kind'] }) {
@@ -197,7 +186,7 @@ export function TaskAttachments({ taskId, onFilesChanged }: { taskId: number; on
             </div>
             {files.length > 0 && <div className="space-y-0.5">
                 {files.map((file) => <div key={file.id} className="group flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1.5 hover:bg-muted/40">
-                    <FileIcon extension={file.extension} />
+                    <FileTypeIcon name={file.name} extension={file.extension} size="inline" />
                     {editingFile === file.id ? (
                         <>
                             <input autoFocus className={inlineField + ' flex-1'} aria-label="Filename"

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, router } from '@inertiajs/react';
-import { FileText, Table2, Presentation, HardDrive, Figma, Globe2, FileArchive, FileImage, File, FileSpreadsheet, Search, ChevronDown } from 'lucide-react';
+import { FileText, Table2, Presentation, HardDrive, Figma, Globe2, Search, ChevronDown } from 'lucide-react';
+import { FileTypeIcon } from '@/components/files/file-type-icon';
 import type { Filters, Page, ProjectFile, ProjectLink } from '@/types/project';
 import type { ReactNode } from 'react';
 import { UserAvatar } from '@/components/user-avatar';
@@ -25,16 +26,7 @@ export function ServiceIcon({ kind }: { kind: ProjectLink['kind'] }) {
 }
 
 export function AttachmentIcon({ file, compact = false }: { file: ProjectFile; compact?: boolean }) {
-    const e = (file.extension || '').toLowerCase();
-    let Icon = File;
-    let color = 'bg-muted text-muted-foreground';
-    if (e === 'pdf') { Icon = FileText; color = 'bg-red-50 text-red-500 dark:bg-red-500/15'; }
-    else if (['jpg', 'png', 'jpeg', 'webp', 'gif', 'svg', 'avif'].includes(e)) { Icon = FileImage; color = 'bg-blue-50 text-blue-600 dark:bg-blue-500/15'; }
-    else if (['zip', 'rar', '7z', 'tar', 'gz'].includes(e)) { Icon = FileArchive; color = 'bg-violet-50 text-violet-500 dark:bg-violet-500/15'; }
-    else if (['csv', 'xls', 'xlsx'].includes(e)) { Icon = FileSpreadsheet; color = 'bg-green-50 text-green-600 dark:bg-green-500/15'; }
-    return <span className={'grid shrink-0 place-items-center ' + (compact ? 'size-8 rounded-md ' : 'size-10 rounded-lg ') + color}>
-        <Icon className={compact ? 'size-4' : 'size-5'} strokeWidth={1.7} />
-    </span>;
+    return <FileTypeIcon name={file.name} extension={file.extension} size={compact ? 'compact' : 'normal'} />;
 }
 
 export function bytes(value: number) {
