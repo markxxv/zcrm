@@ -115,6 +115,18 @@ class ChunkUploadsTest extends TestCase
         Storage::disk('local')->assertExists($file->path);
         $this->assertSame(hash('sha256', $bytes), hash('sha256', Storage::disk('local')->get($file->path)));
 
+        // Resume with the previous session ID even if the final response
+        // was lost; no second file should be created.
+        $this->postJson('/uploads/start', [
+            'target_type' => 'project',
+            'target_id' => $project->id,
+            'name' => 'large-video.mp4',
+            'size' => $size,
+            'client_key' => str_repeat('a', 64),
+            'resume_id' => $id,
+        ])->assertOk()->assertJsonPath('status', 'completed')
+            ->assertJsonPath('result_id', $file->id);
+
         // Retrying completion cannot create a duplicate entry.
         $this->postJson('/uploads/'.$id.'/complete')
             ->assertOk()->assertJsonPath('file.id', $file->id);

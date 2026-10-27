@@ -104,6 +104,7 @@ export const ChunkUploader = forwardRef<ChunkUploaderHandle, Props>(
         const controller = useRef<AbortController | null>(null);
         const selected = useRef<File[]>([]);
         const sessionIds = useRef<string[]>([]);
+        const sessionKeys = useRef<string[]>([]);
         const current = useRef(0);
         const running = useRef(false);
         const dragDepth = useRef(0);
@@ -133,6 +134,9 @@ export const ChunkUploader = forwardRef<ChunkUploaderHandle, Props>(
             const clientKey = await sha256(new TextEncoder().encode(
                 JSON.stringify([scope, targetId, file.name, file.size, file.lastModified])
             ));
+            const storageKey = 'zcrm:chunk:' + clientKey;
+            let resumeId: string | null = null;
+            try { resumeId = localStorage.getItem(storageKey); } catch { /* private browsing */ }
             const state = await request<State>('/uploads/start', 'POST', {
                 target_type: scope,
                 target_id: targetId,
@@ -140,8 +144,17 @@ export const ChunkUploader = forwardRef<ChunkUploaderHandle, Props>(
                 size: file.size,
                 mime_type: file.type || null,
                 client_key: clientKey,
+                ...(resumeId ? { resume_id: resumeId } : {}),
             }, signal);
+            try { localStorage.setItem(storageKey, state.id); } catch { /* optional */ }
+            if (state.status === 'completed') {
+                try { localStorage.removeItem(storageKey); } catch { /* optional */ }
+                patch(position, { stage: 'done', progress: 100 });
+                callback.current?.();
+                return;
+            }
             sessionIds.current[position] = state.id;
+            sessionKeys.current[position] = storageKey;
 
             const chunkSize = state.chunk_size;
             const total = state.total_chunks;
@@ -182,6 +195,7 @@ export const ChunkUploader = forwardRef<ChunkUploaderHandle, Props>(
             }
 
             await request('/uploads/' + state.id + '/complete', 'POST', {}, signal);
+            try { localStorage.removeItem(storageKey); } catch { /* optional */ }
             patch(position, { stage: 'done', progress: 100 });
             callback.current?.();
         }
@@ -234,6 +248,7 @@ export const ChunkUploader = forwardRef<ChunkUploaderHandle, Props>(
             selected.current = arr;
             current.current = 0;
             sessionIds.current = [];
+            sessionKeys.current = [];
             setItems(arr.map((file) => ({ name: file.name, size: file.size, progress: 0, stage: 'pending' })));
             setError('');
             setMessage('');
@@ -249,6 +264,10 @@ export const ChunkUploader = forwardRef<ChunkUploaderHandle, Props>(
         async function cancel() {
             pause();
             const ids = [...sessionIds.current];
+            for (const key of sessionKeys.current) {
+                try { localStorage.removeItem(key); } catch { /* optional */ }
+            }
+            sessionKeys.current = [];
             selected.current = [];
             current.current = 0;
             sessionIds.current = [];

@@ -64,10 +64,32 @@ class ChunkUploadController extends Controller
             'size' => ['required', 'integer', 'min:1', 'max:'.self::MAX_FILE_SIZE],
             'mime_type' => ['nullable', 'string', 'max:160'],
             'client_key' => ['required', 'regex:/^[a-f0-9]{64}$/'],
+            'resume_id' => ['nullable', 'uuid'],
         ]);
 
         $this->authorizeTarget($request, $data['target_type'], (int) $data['target_id']);
         $name = basename(str_replace('\\', '/', $data['name']));
+
+        // Explicit session recovery also handles the case where the server
+        // finished the file, but the final HTTP response was lost.
+        if (!empty($data['resume_id'])) {
+            $resumed = ChunkUpload::query()
+                ->whereKey($data['resume_id'])
+                ->where('user_id', $request->user()->id)
+                ->where('target_type', $data['target_type'])
+                ->where('target_id', $data['target_id'])
+                ->where('client_key', $data['client_key'])
+                ->where('name', $name)
+                ->where('size', $data['size'])
+                ->where('expires_at', '>', now())
+                ->whereIn('status', ['uploading', 'assembling', 'completed'])
+                ->first();
+
+            if ($resumed) {
+                return response()->json($this->state($resumed));
+            }
+        }
+
 
         $query = ChunkUpload::query()
             ->where('user_id', $request->user()->id)
