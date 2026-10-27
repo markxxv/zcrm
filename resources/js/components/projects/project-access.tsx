@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { router } from '@inertiajs/react';
-import { AlignLeft, ChevronDown, Copy, Database, Eye, EyeOff, Globe2, HardDrive, KeyRound, Layers3, Pencil, Plus, Server, ShieldCheck, Trash2, UserRound } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlignLeft, ChevronDown, Database, Eye, EyeOff, Globe2, HardDrive, KeyRound, Layers3, Pencil, Plus, Server, ShieldCheck, Trash2, UserRound } from 'lucide-react';
 import type { Filters, Page, ProjectAccess } from '@/types/project';
 import { SectionHeader, Paginator, ResourceSearch, FilterSelect, mutedButton, outlineButton, solidButton, useResourceFilters } from './resources';
 import { ProjectFormField, projectFieldInput } from './project-form-field';
 import { ProjectResponsiveDialog } from './project-responsive-dialog';
+import { ProjectCredentialViewer } from './project-credential-viewer';
 
 type Props = { projectId: number; page: Page<ProjectAccess> | null; filters: Filters; canAccessVault: boolean };
 type SecretForm = { name: string; category: string; host: string; username: string; secret: string; notes: string };
@@ -30,11 +30,11 @@ export function ProjectAccessTab({ projectId, page, filters, canAccessVault }: P
     const [revealing, setRevealing] = useState<ProjectAccess | null>(null);
     const [revealed, setRevealed] = useState<string | null>(null);
     const [revealNotes, setRevealNotes] = useState<string | null>(null);
-    const [visible, setVisible] = useState(false);
+    const revealSequence = useRef(0);
     const [revealError, setRevealError] = useState('');
     const base = '/projects/' + projectId + '/access';
 
-    useEffect(() => { setOpened(false); setRevealing(null); setRevealed(null); }, [projectId]);
+    useEffect(() => { setOpened(false); hideReveal(); }, [projectId]);
     const closeEditor = () => {
         setOpened(false); setActive(null); setForm(blank); setErrors({});
         setShowSecret(false); setConfirmDelete(false);
@@ -48,7 +48,7 @@ export function ProjectAccessTab({ projectId, page, filters, canAccessVault }: P
             return next;
         });
     };
-    function hideReveal() { setRevealing(null); setRevealed(null); setRevealNotes(null); setVisible(false); setRevealError(''); }
+    function hideReveal() { revealSequence.current++; setRevealing(null); setRevealed(null); setRevealNotes(null); setRevealError(''); }
 
     async function loadSecret(access: ProjectAccess): Promise<{ secret: string; notes: string | null }> {
         const res = await fetch(base + '/' + access.id + '/reveal', {
@@ -73,11 +73,22 @@ export function ProjectAccessTab({ projectId, page, filters, canAccessVault }: P
         }
     };
     const reveal = async (access: ProjectAccess) => {
-        setRevealing(access); setRevealed(null); setRevealNotes(null); setRevealError(''); setVisible(false);
+        const sequence = ++revealSequence.current;
+        setRevealing(access);
+        setRevealed(null);
+        setRevealNotes(null);
+        setRevealError('');
         try {
             const data = await loadSecret(access);
-            setRevealed(data.secret); setRevealNotes(data.notes);
-        } catch (error) { setRevealError(error instanceof Error ? error.message : 'Unable to reveal credential'); }
+            if (sequence === revealSequence.current) {
+                setRevealed(data.secret);
+                setRevealNotes(data.notes);
+            }
+        } catch (error) {
+            if (sequence === revealSequence.current) {
+                setRevealError(error instanceof Error ? error.message : 'Unable to reveal credential');
+            }
+        }
     };
     const save = () => {
         if (!notesLoaded) { setErrors({ notes: 'Encrypted notes are unavailable. Reopen this entry.' }); return; }
@@ -214,21 +225,7 @@ export function ProjectAccessTab({ projectId, page, filters, canAccessVault }: P
                 </div>
             </div>
         </ProjectResponsiveDialog>
-        <Dialog open={!!revealing} onOpenChange={(next) => { if (!next) hideReveal(); }}>
-            <DialogContent>
-                <DialogHeader><DialogTitle>Credential · {revealing?.name}</DialogTitle></DialogHeader>
-                <p className="text-xs text-muted-foreground">{revealing?.host}</p>
-                {revealError && <p role="alert" className="text-xs text-red-600">{revealError}</p>}
-                {revealed !== null ? <div className="grid gap-3">
-                    <div className="flex items-center gap-2 rounded-lg bg-muted/40 p-3">
-                        <span className="min-w-0 flex-1 break-all font-mono text-xs">{visible ? revealed : '•'.repeat(Math.min(Math.max(revealed.length, 8), 32))}</span>
-                        <button className={mutedButton} onClick={() => setVisible(!visible)} aria-label={visible ? 'Hide password' : 'Show password'}>{visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button>
-                        <button className={mutedButton} onClick={() => navigator.clipboard.writeText(revealed)} aria-label="Copy password"><Copy className="size-4" /></button>
-                    </div>
-                    {revealNotes && <p className="whitespace-pre-wrap text-xs text-muted-foreground">{revealNotes}</p>}
-                    <p className="text-[11px] text-muted-foreground">This access is logged. Close this window to clear the value from the screen.</p>
-                </div> : !revealError && <p className="text-xs text-muted-foreground">Decrypting…</p>}
-            </DialogContent>
-        </Dialog>
+        <ProjectCredentialViewer access={revealing} secret={revealed}
+            notes={revealNotes} error={revealError} onClose={hideReveal} />
     </>;
 }
