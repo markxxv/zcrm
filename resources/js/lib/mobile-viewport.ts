@@ -110,5 +110,9 @@ export function initMobileViewport(): void {
         window.setTimeout(scheduleUpdate, 320);
     });
     document.addEventListener('focusout', scheduleUpdate);
+    document.addEventListener('input', scheduleUpdate, true);
+    document.addEventListener('selectionchange', () => {
+        if (root.classList.contains('mobile-keyboard-open')) scheduleUpdate();
+    });
     scheduleUpdate();
 }
