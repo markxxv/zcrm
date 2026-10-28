@@ -99,7 +99,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
     <Drawer open={open} onOpenChange={(next) => { if (!next && uploadingImage) return; onOpenChange(next); }} direction="right" >
       <DrawerContent className="h-full w-full sm:min-w-[600px] ml-auto rounded-none outline-0">
         {/* Compact Header */}
-        <div className="flex items-center justify-between px-6 pt-4">
+        <div className="flex shrink-0 items-center justify-between px-6 pt-4">
           <DrawerTitle className="text-lg font-light tracking-tight">Edit Task</DrawerTitle>
           <DrawerDescription className="sr-only">
             Edit task details, description, and due date
@@ -111,9 +111,9 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
           </DrawerClose>
         </div>
 
-        <form onSubmit={handleSubmit}  data-vaul-no-drag className="flex flex-1 flex-col overflow-hidden">
+        <form onSubmit={handleSubmit} data-vaul-no-drag className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto px-6 py-6">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-6">
             <div className="space-y-6">
               {/* Title */}
               <div className="space-y-2">
@@ -188,7 +188,7 @@ export function TaskDrawer({ task, open, onOpenChange, availableUsers, available
           </div>
 
           {/* Compact Footer */}
-          <div className="px-6 pb-3">
+          <div className="shrink-0 px-6 pb-3">
             <div className="flex items-center justify-between gap-3">
               <Button
                 type="button"

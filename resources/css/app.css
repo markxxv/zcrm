@@ -290,3 +290,37 @@
     }
     .task-rich-editor .tiptap hr { margin: 1.2rem 0; border-top: 1px solid var(--border); }
 }
+
+
+/* Keep dialogs and drawers inside the iOS viewport while the keyboard is visible. */
+@media (max-width: 767px) {
+    html.mobile-keyboard-open [data-slot="drawer-content"][data-vaul-drawer-direction="right"],
+    html.mobile-keyboard-open [data-slot="drawer-content"][data-vaul-drawer-direction="left"],
+    html.mobile-keyboard-open [data-slot="sheet-content"][data-mobile-sheet-side="right"],
+    html.mobile-keyboard-open [data-slot="sheet-content"][data-mobile-sheet-side="left"] {
+        top: var(--mobile-visual-top) !important;
+        bottom: auto !important;
+        height: var(--mobile-visual-height) !important;
+        max-height: var(--mobile-visual-height) !important;
+        min-height: 0;
+    }
+
+    html.mobile-keyboard-open [data-slot="drawer-content"][data-vaul-drawer-direction="bottom"],
+    html.mobile-keyboard-open [data-slot="sheet-content"][data-mobile-sheet-side="bottom"] {
+        bottom: var(--mobile-visual-bottom) !important;
+        max-height: var(--mobile-visual-height) !important;
+    }
+
+    html.mobile-keyboard-open [data-slot="dialog-content"] {
+        top: calc(var(--mobile-visual-top) + var(--mobile-visual-height) / 2) !important;
+        max-height: calc(var(--mobile-visual-height) - 1rem) !important;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    html.mobile-keyboard-open [data-slot="popover-content"],
+    html.mobile-keyboard-open [data-slot="select-content"] {
+        max-height: calc(var(--mobile-visual-height) - 1rem);
+        overflow-y: auto;
+    }
+}
