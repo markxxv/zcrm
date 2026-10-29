@@ -35,19 +35,19 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>
-                <NavMain items={mainNavItems} projectAction={<ProjectQuickCreate />} />
-                {projectNav.length > 0 && (
-                    <div className="group-data-[collapsible=icon]:hidden space-y-0.5 px-5 pt-1">
-                        {projectNav.map((project) => (
-                            <Link key={project.id} href={'/projects/' + project.id}
-                                className={'flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-sidebar-accent ' +
-                                (currentPath === '/projects/' + project.id ? 'font-medium text-sidebar-foreground' : 'text-muted-foreground')}>
-                                <span className={'size-1.5 shrink-0 rounded-full ' + (project.status === 'active' ? 'bg-green-500' : project.status === 'paused' ? 'bg-amber-500' : 'bg-muted-foreground/50')} />
-                                <span className="truncate">{project.name}</span>
-                            </Link>
-                        ))}
-                    </div>
-                )}
+                <NavMain items={mainNavItems} projectAction={<ProjectQuickCreate />}
+                    projectList={projectNav.length > 0 && (
+                        <div className="space-y-0.5 px-3 pt-1">
+                            {projectNav.map((project) => (
+                                <Link key={project.id} href={'/projects/' + project.id}
+                                    className={'flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-sidebar-accent ' +
+                                    (currentPath === '/projects/' + project.id ? 'font-medium text-sidebar-foreground' : 'text-muted-foreground')}>
+                                    <span className={'size-1.5 shrink-0 rounded-full ' + (project.status === 'active' ? 'bg-green-500' : project.status === 'paused' ? 'bg-amber-500' : 'bg-muted-foreground/50')} />
+                                    <span className="truncate">{project.name}</span>
+                                </Link>
+                            ))}
+                        </div>
+                    )} />
             </SidebarContent>
             <SidebarFooter><NavFooter items={[]} className="mt-auto" /><NavUser /></SidebarFooter>
         </Sidebar>

@@ -10,7 +10,7 @@ import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { type ReactNode } from 'react';
 
-export function NavMain({ items = [], projectAction }: { items: NavItem[]; projectAction?: ReactNode }) {
+export function NavMain({ items = [], projectAction, projectList }: { items: NavItem[]; projectAction?: ReactNode; projectList?: ReactNode }) {
     const { urlIsActive } = useActiveUrl();
 
     return (
@@ -18,19 +18,26 @@ export function NavMain({ items = [], projectAction }: { items: NavItem[]; proje
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                            asChild
-                            isActive={urlIsActive(item.href)}
-                            tooltip={{ children: item.title }}
-                        >
-                            <Link href={item.href} prefetch>
-                                {item.icon && <item.icon />}
-                                <span>{item.title}</span>
-                            </Link>
-                        </SidebarMenuButton>
-                        {item.title === 'Projects' && projectAction}
-                    </SidebarMenuItem>
+                    <div key={item.title} className="contents">
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={urlIsActive(item.href)}
+                                tooltip={{ children: item.title }}
+                            >
+                                <Link href={item.href} prefetch>
+                                    {item.icon && <item.icon />}
+                                    <span>{item.title}</span>
+                                </Link>
+                            </SidebarMenuButton>
+                            {item.title === 'Projects' && projectAction}
+                        </SidebarMenuItem>
+                        {item.title === 'Projects' && projectList && (
+                            <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+                                {projectList}
+                            </SidebarMenuItem>
+                        )}
+                    </div>
                 ))}
             </SidebarMenu>
         </SidebarGroup>
