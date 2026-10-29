@@ -8,7 +8,7 @@ import {
 import { useActiveUrl } from '@/hooks/use-active-url';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { type ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 
 export function NavMain({ items = [], projectAction, projectList }: { items: NavItem[]; projectAction?: ReactNode; projectList?: ReactNode }) {
     const { urlIsActive } = useActiveUrl();
@@ -18,7 +18,7 @@ export function NavMain({ items = [], projectAction, projectList }: { items: Nav
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
-                    <div key={item.title} className="contents">
+                    <Fragment key={item.title}>
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -37,7 +37,7 @@ export function NavMain({ items = [], projectAction, projectList }: { items: Nav
                                 {projectList}
                             </SidebarMenuItem>
                         )}
-                    </div>
+                    </Fragment>
                 ))}
             </SidebarMenu>
         </SidebarGroup>
