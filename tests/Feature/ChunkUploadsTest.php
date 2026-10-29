@@ -193,6 +193,7 @@ class ChunkUploadsTest extends TestCase
     public function test_upload_authorization_is_rechecked_on_each_request(): void
     {
         Storage::fake('local');
+        User::factory()->create(); // User #1 may still access projects without membership.
         $owner = User::factory()->create();
         $outsider = User::factory()->create();
         $project = $this->project($owner);
