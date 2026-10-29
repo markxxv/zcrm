@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use App\Support\FileThumbnail;
@@ -21,6 +22,15 @@ class Project extends Model
                 FileThumbnail::purge($file);
             }
         });
+    }
+
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        if ($user->canViewAllProjects()) {
+            return $query;
+        }
+
+        return $query->whereHas('members', fn (Builder $members) => $members->whereKey($user->id));
     }
 
     public function owner(): BelongsTo

@@ -9,7 +9,8 @@ class ProjectPolicy
 {
     public function view(User $user, Project $project): bool
     {
-        return $project->members()->whereKey($user->id)->exists();
+        return $user->canViewAllProjects()
+            || $project->members()->whereKey($user->id)->exists();
     }
 
     public function update(User $user, Project $project): bool

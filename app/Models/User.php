@@ -44,6 +44,11 @@ class User extends Authenticatable
             : null;
     }
 
+    public function canViewAllProjects(): bool
+    {
+        return $this->getKey() === 1;
+    }
+
     public function projects(): BelongsToMany
     {
         return $this->belongsToMany(Project::class, 'project_user')->withTimestamps();
