@@ -49,7 +49,7 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'projectNav' => $request->user()
                 ? fn () => Project::query()
-                    ->whereHas('members', fn ($query) => $query->whereKey($request->user()->id))
+                    ->visibleTo($request->user())
                     ->orderBy('name')
                     ->limit(10)
                     ->get(['id', 'name', 'status'])

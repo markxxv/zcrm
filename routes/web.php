@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ChunkUploadController;
 use App\Http\Controllers\ProjectAccessController;
 use App\Http\Controllers\ProjectController;
@@ -21,6 +22,14 @@ Route::get('/', fn () => Inertia::render('welcome', [
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+
+    Route::middleware('can:manage-users')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::patch('/users/{user}/password', [UserController::class, 'password'])->middleware('throttle:12,1')->name('users.password');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+    });
 
     // Shared resumable chunk protocol for both Project and Task file attachments.
     Route::post('/uploads/start', [ChunkUploadController::class, 'start'])->name('uploads.start');

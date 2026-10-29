@@ -8,20 +8,20 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { CheckSquare, FolderKanban, LayoutGrid } from 'lucide-react';
+import { CheckSquare, FolderKanban, LayoutGrid, Users } from 'lucide-react';
 import AppLogo from './app-logo';
-
-const mainNavItems: NavItem[] = [
-    { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
-    { title: 'Tasks', href: '/tasks', icon: CheckSquare },
-    { title: 'Projects', href: '/projects', icon: FolderKanban },
-];
 
 type SidebarProject = { id: number; name: string; status: string };
 
 export function AppSidebar() {
-    const { projectNav = [] } = usePage<SharedData & { projectNav?: SidebarProject[] }>().props;
+    const { auth, projectNav = [] } = usePage<SharedData & { projectNav?: SidebarProject[] }>().props;
     const currentPath = usePage().url.split('?')[0];
+    const mainNavItems: NavItem[] = [
+        { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
+        { title: 'Tasks', href: '/tasks', icon: CheckSquare },
+        { title: 'Projects', href: '/projects', icon: FolderKanban },
+        ...(auth.user.id === 1 ? [{ title: 'Users', href: '/admin/users', icon: Users }] : []),
+    ];
 
     return (
         <Sidebar collapsible="icon" variant="inset">

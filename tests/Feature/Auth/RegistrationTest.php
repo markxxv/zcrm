@@ -9,23 +9,18 @@ class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_screen_can_be_rendered()
+    public function test_public_registration_is_disabled(): void
     {
-        $response = $this->get(route('register'));
+        $this->get('/register')->assertNotFound();
 
-        $response->assertStatus(200);
-    }
+        $this->post('/register', [
+            'name' => 'Anonymous',
+            'email' => 'anonymous@example.com',
+            'password' => 'Unapproved!Password123',
+            'password_confirmation' => 'Unapproved!Password123',
+        ])->assertNotFound();
 
-    public function test_new_users_can_register()
-    {
-        $response = $this->post(route('register.store'), [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-        ]);
-
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $this->assertGuest();
+        $this->assertDatabaseCount('users', 0);
     }
 }
