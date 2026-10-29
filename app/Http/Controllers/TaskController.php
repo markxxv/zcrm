@@ -15,7 +15,7 @@ class TaskController extends Controller
     {
         $ids = array_values(array_unique(array_map('intval', $ids)));
         $allowed = Project::query()->whereIn('id', $ids)
-            ->whereHas('members', fn ($q) => $q->whereKey($request->user()->id))
+            ->visibleTo($request->user())
             ->pluck('id')->all();
         abort_unless(count($allowed) === count($ids), 403, 'Access to one or more projects is denied.');
 
@@ -69,7 +69,7 @@ class TaskController extends Controller
             if (array_key_exists('project_ids', $validated)) {
                 $allowedIds = $this->validateProjects($request, $validated['project_ids']);
                 // Preserve projects which this user cannot see or remove.
-                $existingHiddenIds = $task->projects()->whereDoesntHave(
+                $existingHiddenIds = $request->user()->canViewAllProjects() ? [] : $task->projects()->whereDoesntHave(
                     'members', fn ($q) => $q->whereKey($request->user()->id)
                 )->pluck('projects.id')->all();
                 $task->projects()->sync(array_unique(array_merge($existingHiddenIds, $allowedIds)));
@@ -88,7 +88,10 @@ class TaskController extends Controller
 
         $date = $request->date('date')?->toDateString() ?? today()->toDateString();
         $tasks = Task::query()
-            ->with(['assignedUsers:id,name,email,avatar_path', 'projects:id,name'])
+            ->with([
+                'assignedUsers:id,name,email,avatar_path',
+                'projects' => fn ($query) => $query->visibleTo($request->user())->select(['projects.id', 'projects.name']),
+            ])
             ->whereHas('assignedUsers', fn ($q) => $q->whereKey($request->user()->id))
             ->where(fn ($q) => $q
                 ->whereDate('due_date', $date)
@@ -102,7 +105,7 @@ class TaskController extends Controller
             'selectedDate' => $date,
             'availableUsers' => User::orderBy('name')->get(['id', 'name', 'email', 'avatar_path']),
             'availableProjects' => Project::query()
-                ->whereHas('members', fn ($q) => $q->whereKey($request->user()->id))
+                ->visibleTo($request->user())
                 ->orderBy('name')->get(['id', 'name']),
         ]);
     }

@@ -17,7 +17,7 @@ class ProjectController extends Controller
     {
         return Inertia::render('projects/index', [
             'projects' => Project::query()
-                ->whereHas('members', fn ($q) => $q->whereKey($request->user()->id))
+                ->visibleTo($request->user())
                 ->select(['id', 'name', 'description', 'status', 'created_by'])
                 ->withCount(['members', 'tasks'])
                 ->withSum('files as files_size_bytes', 'size')
@@ -69,7 +69,10 @@ class ProjectController extends Controller
 
         $project->load(['members:id,name,email,avatar_path']);
         $tasks = $project->tasks()
-            ->with(['assignedUsers:id,name,email,avatar_path', 'projects:id,name'])
+            ->with([
+                'assignedUsers:id,name,email,avatar_path',
+                'projects' => fn ($query) => $query->visibleTo($request->user())->select(['projects.id', 'projects.name']),
+            ])
             ->orderBy('is_completed')->orderBy('due_date')->get();
 
         $q = mb_substr(trim((string) $request->query('q', '')), 0, 150);
@@ -138,7 +141,7 @@ class ProjectController extends Controller
             'counts' => ['files' => ProjectFileLibrary::query($project)->count(), 'links' => $project->links()->count()],
             'availableUsers' => User::query()->orderBy('name')->get(['id', 'name', 'email', 'avatar_path']),
             'availableProjects' => Project::query()
-                ->whereHas('members', fn ($query) => $query->whereKey($request->user()->id))
+                ->visibleTo($request->user())
                 ->orderBy('name')->get(['id', 'name']),
             'linkCategories' => $project->links()->whereNotNull('category')
                 ->where('category', '!=', '')->distinct()->orderBy('category')
