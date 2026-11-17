@@ -23,15 +23,15 @@ class DashboardTest extends TestCase
         $this->actingAs(User::factory()->create());
 
         $this->get(route('dashboard'))->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->component('dashboard')
-            ->where('today', today()->toDateString())
+            ->component('tasks/index')
+            ->where('selectedDate', today()->toDateString())
             ->has('tasks', 0)
             ->has('availableUsers')
             ->has('availableProjects')
         );
     }
 
-    public function test_dashboard_only_shows_incomplete_assigned_tasks_ordered_by_due_date_and_priority()
+    public function test_dashboard_uses_the_same_daily_tasks_and_project_visibility_as_tasks_page()
     {
         $owner = User::factory()->create();
         $user = User::factory()->create();
@@ -54,24 +54,38 @@ class DashboardTest extends TestCase
 
         $future = $create($user, today()->addDay()->toDateString());
         $normal = $create($user, today()->toDateString());
-        $critical = $create($user, today()->toDateString(), 'critical');
         $overdue = $create($user, today()->subDay()->toDateString());
         $overdue->projects()->attach([$visible->id, $hidden->id]);
-        $create($user, today()->toDateString(), completed: true);
+        $completed = $create($user, today()->toDateString(), completed: true);
+        $create($user, today()->subDay()->toDateString(), completed: true);
         $create($owner, today()->toDateString());
 
-        $this->actingAs($user)->get(route('dashboard'))->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->component('dashboard')
-            ->has('tasks', 4)
-            ->where('tasks.0.id', $overdue->id)
-            ->where('tasks.1.id', $critical->id)
-            ->where('tasks.2.id', $normal->id)
-            ->where('tasks.3.id', $future->id)
-            ->has('tasks.0.projects', 1)
-            ->where('tasks.0.projects.0.id', $visible->id)
-            ->has('availableProjects', 1)
-            ->where('availableProjects.0.id', $visible->id)
-        );
+        $this->actingAs($user);
+
+        foreach (['dashboard', 'tasks.index'] as $route) {
+            $this->get(route($route))->assertOk()->assertInertia(fn (Assert $page) => $page
+                ->component('tasks/index')
+                ->where('selectedDate', today()->toDateString())
+                ->has('tasks.current', 2)
+                ->where('tasks.current', fn ($tasks) => collect($tasks)->pluck('id')->sort()->values()->all()
+                    === collect([$normal->id, $completed->id])->sort()->values()->all())
+                ->has('tasks.past', 1)
+                ->where('tasks.past.0.id', $overdue->id)
+                ->has('tasks.past.0.projects', 1)
+                ->where('tasks.past.0.projects.0.id', $visible->id)
+                ->has('availableProjects', 1)
+                ->where('availableProjects.0.id', $visible->id)
+            );
+        }
+
+        $this->get(route('dashboard', ['date' => today()->addDay()->toDateString()]))
+            ->assertOk()->assertInertia(fn (Assert $page) => $page
+                ->component('tasks/index')
+                ->where('selectedDate', today()->addDay()->toDateString())
+                ->has('tasks.current', 1)
+                ->where('tasks.current.0.id', $future->id)
+                ->has('tasks.past', 2)
+            );
     }
 
     public function test_quick_add_creates_a_task_assigned_to_the_current_user()
@@ -87,7 +101,7 @@ class DashboardTest extends TestCase
         $this->assertTrue($user->assignedTasks()->where('title', 'New task')->exists());
     }
 
-    public function test_completing_a_task_from_dashboard_removes_it_from_open_tasks()
+    public function test_completing_a_task_from_dashboard_marks_it_completed_on_the_selected_day()
     {
         $user = User::factory()->create();
         $task = Task::create([
@@ -105,8 +119,10 @@ class DashboardTest extends TestCase
 
         $this->assertTrue($task->fresh()->is_completed);
         $this->get(route('dashboard'))->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->component('dashboard')
-            ->has('tasks', 0)
+            ->component('tasks/index')
+            ->has('tasks.current', 1)
+            ->where('tasks.current.0.id', $task->id)
+            ->where('tasks.current.0.is_completed', true)
         );
     }
 }

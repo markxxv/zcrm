@@ -22,6 +22,11 @@ class TaskController extends Controller
         return $allowed;
     }
 
+    public function dashboard(Request $request)
+    {
+        return $this->renderTasks($request);
+    }
+
     public function index(Request $request)
     {
         if ($request->isMethod('post')) {
@@ -86,6 +91,11 @@ class TaskController extends Controller
             return back();
         }
 
+        return $this->renderTasks($request);
+    }
+
+    private function renderTasks(Request $request)
+    {
         $date = $request->date('date')?->toDateString() ?? today()->toDateString();
         $tasks = Task::query()
             ->with([
