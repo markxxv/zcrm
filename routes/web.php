@@ -12,13 +12,21 @@ use App\Http\Controllers\TaskEditorImageController;
 use App\Http\Controllers\TaskAttachmentController;
 use App\Http\Controllers\TaskFileController;
 use App\Http\Controllers\TaskLinkController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
-Route::get('/', fn () => Inertia::render('welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-]))->name('home');
+Route::get('/', function (Request $request) {
+    if ($request->user()) {
+        return to_route('dashboard');
+    }
+
+    return Inertia::render('auth/login', [
+        'canResetPassword' => Features::enabled(Features::resetPasswords()),
+        'status' => $request->session()->get('status'),
+    ]);
+})->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
