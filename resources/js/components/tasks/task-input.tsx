@@ -19,8 +19,8 @@ export function TaskInput({ onCreateTask, inputRef, compact = false, placeholder
   };
 
   return (
-    <div className={compact ? "mb-5" : "mb-12"}>
-      <div className={compact ? "flex items-center gap-3 rounded-xl bg-muted/40 px-4 py-3.5 transition-colors focus-within:bg-muted/60" : "bg-card rounded-lg p-4 flex items-center gap-4 focus-within:shadow-sm transition-all duration-200 border border-sidebar-border/70"}>
+    <div className={compact ? "mb-5" : "mb-6"}>
+      <div className={compact ? "flex items-center gap-3 rounded-xl bg-muted/40 px-4 py-3.5 transition-colors focus-within:bg-muted/60" : "bg-card rounded-lg p-3 flex items-center gap-3 focus-within:shadow-sm transition-all duration-200 border border-sidebar-border/70"}>
         <div className={compact ? "grid size-5 shrink-0 place-items-center text-muted-foreground" : "flex-shrink-0 w-8 h-8 rounded-full border border-sidebar-border flex items-center justify-center text-muted-foreground"}>
           <Plus className="w-4 h-4" />
         </div>

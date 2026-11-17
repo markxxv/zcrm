@@ -89,24 +89,17 @@ export default function TasksIndex({ tasks, selectedDate, availableUsers, availa
       <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
         <div className="w-full max-w-2xl mx-auto">
           {/* Header */}
-          <div className="mb-12">
-            <div className="relative min-h-20 overflow-hidden">
-              <img src="/img/mascot.webp" alt="" aria-hidden="true" width={900} height={900}
-                className="pointer-events-none absolute -bottom-6 right-0 w-28 select-none sm:-bottom-8 sm:w-36" />
-              <div className="relative flex flex-wrap items-baseline gap-x-3 gap-y-1 py-3 pr-28 sm:pr-36">
-                <h1 className="text-[32px] font-light tracking-tight text-foreground">
-                  Today
-                </h1>
-                <span className="text-sm font-light text-muted-foreground">
-                  {new Date(selectedDate).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'short',
-                    day: 'numeric'
-                  })}
-                </span>
-              </div>
-            </div>
-            <div className="h-px bg-sidebar-border/70"></div>
+          <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h1 className="text-2xl font-light tracking-tight text-foreground sm:text-3xl">
+              Today
+            </h1>
+            <span className="text-sm font-light text-muted-foreground">
+              {new Date(selectedDate).toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'short',
+                day: 'numeric'
+              })}
+            </span>
           </div>
 
           {/* Date picker */}
@@ -141,7 +134,7 @@ export default function TasksIndex({ tasks, selectedDate, availableUsers, availa
 
 
           {/* Stats */}
-          <div className="mt-12 flex items-center justify-center gap-8 text-xs text-muted-foreground">
+          <div className="mt-8 flex items-center justify-center gap-6 text-xs text-muted-foreground">
             <span>{completedCount} completed</span>
             <span className="w-1 h-1 rounded-full bg-sidebar-border"></span>
             <span>{remainingCount} remaining</span>

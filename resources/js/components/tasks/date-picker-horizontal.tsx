@@ -1,4 +1,4 @@
-import { format, addDays, isToday, isSameDay, parseISO } from 'date-fns';
+import { format, addDays, isSameDay, parseISO } from 'date-fns';
 import { useRef, useEffect } from 'react';
 
 interface DatePickerHorizontalProps {
@@ -32,12 +32,11 @@ export function DatePickerHorizontal({
   }, [selectedDate]);
 
   return (
-    <div className="mb-8 -mx-8 px-8 overflow-x-auto scrollbar-hide" ref={scrollRef}>
-      <div className="flex gap-2 pb-2">
+    <div className="scrollbar-hide -mx-4 mb-5 overflow-x-auto px-4 sm:mx-0 sm:px-0" ref={scrollRef}>
+      <div className="flex gap-1.5 pb-1 sm:gap-2">
         {dates.map((date) => {
           const dateString = format(date, 'yyyy-MM-dd');
           const isSelected = isSameDay(date, selectedDateObj);
-          const isTodayDate = isToday(date);
 
           return (
             <button
@@ -46,19 +45,19 @@ export function DatePickerHorizontal({
               onClick={() => onDateSelect(dateString)}
               className={`
                 flex-shrink-0 flex flex-col items-center justify-center 
-                w-16 h-20 rounded-xl transition-all duration-300
+                h-14 w-12 rounded-lg transition-all duration-300 sm:h-16 sm:w-14
                 ${isSelected 
                   ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-black shadow-sm' 
                   : 'bg-card text-muted-foreground hover:bg-accent hover:text-foreground'
                 }
               `}
             >
-              <span className={`text-[28px] font-light tracking-tight leading-none ${
+              <span className={`text-xl font-light tracking-tight sm:text-2xl ${
                 isSelected ? 'text-white dark:text-black' : 'text-foreground'
               }`}>
                 {format(date, 'd')}
               </span>
-              <span className="text-[11px] font-medium mt-1 uppercase tracking-wide">
+              <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wide">
                 {format(date, 'MMM')}
               </span>
             </button>

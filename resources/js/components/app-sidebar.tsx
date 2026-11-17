@@ -48,7 +48,12 @@ export function AppSidebar() {
                         </div>
                     )} />
             </SidebarContent>
-            <SidebarFooter><NavFooter items={[]} className="mt-auto" /><NavUser /></SidebarFooter>
+            <SidebarFooter className="shrink-0">
+                <NavFooter items={[]} className="mt-auto" />
+                <img src="/img/racoon-kawai.webp" alt="" aria-hidden="true" decoding="async"
+                    className="pointer-events-none mx-auto mb-3 block h-auto max-h-40 w-28 max-w-full object-contain select-none sm:w-32 group-data-[collapsible=icon]:hidden [@media(max-height:520px)]:hidden" />
+                <NavUser />
+            </SidebarFooter>
         </Sidebar>
     );
 }
